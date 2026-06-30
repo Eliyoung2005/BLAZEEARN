@@ -1465,20 +1465,10 @@ app.get('/api/public/top-earners', (req, res) => {
 
 // Debug Endpoint
 app.get('/api/vercel-debug', (req, res) => {
-    db.get('SELECT username, isVendor FROM users WHERE username = ?', ['mfed'], (err, userRow) => {
-        db.get('SELECT * FROM vendors WHERE linkedUsername = ?', ['mfed'], (err2, vendorRow) => {
-            res.json({
-                vercel: !!process.env.VERCEL,
-                nodeVersion: process.version,
-                importError: db.importError ? { message: db.importError.message, stack: db.importError.stack } : null,
-                mfed: {
-                    user: userRow || null,
-                    vendor: vendorRow || null,
-                    userError: err ? err.message : null,
-                    vendorError: err2 ? err2.message : null
-                }
-            });
-        });
+    res.json({
+        vercel: !!process.env.VERCEL,
+        nodeVersion: process.version,
+        importError: db.importError ? { message: db.importError.message, stack: db.importError.stack } : null
     });
 });
 

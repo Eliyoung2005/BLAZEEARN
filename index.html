@@ -1996,9 +1996,8 @@ async function handleLogin() {
       localStorage.setItem('blaze_token', userToken);
       currentUser = res.user;
       localStorage.setItem('blaze_user', JSON.stringify(currentUser));
+        updateVendorUI();
         if (currentUser.isVendor) {
-            if(document.getElementById('sb-vendor-area')) document.getElementById('sb-vendor-area').style.display = 'flex';
-            if(document.getElementById('bn-vendor-area')) document.getElementById('bn-vendor-area').style.display = 'flex';
             loadVendorDashboard();
         }
       loadProfile();
@@ -3034,6 +3033,16 @@ function updateAdminStats(){
     setEl('st-wds',w.filter(function(x){return x.status==='pending';}).length);
 }
 
+function updateVendorUI() {
+  if (currentUser && currentUser.isVendor) {
+    if(document.getElementById('sb-vendor-area')) document.getElementById('sb-vendor-area').style.display = 'flex';
+    if(document.getElementById('bn-vendor-area')) document.getElementById('bn-vendor-area').style.display = 'flex';
+  } else {
+    if(document.getElementById('sb-vendor-area')) document.getElementById('sb-vendor-area').style.display = 'none';
+    if(document.getElementById('bn-vendor-area')) document.getElementById('bn-vendor-area').style.display = 'none';
+  }
+}
+
 // ===== PROFILE =====
 function loadProfile(){
   if(typeof checkTargetedPopup === 'function') checkTargetedPopup();
@@ -3221,7 +3230,7 @@ async function loadDashboardTopEarners() {
 }
 
 
-async function fetchUser() { try { var res = await api('GET', '/api/user/profile'); if (res && res.user) { currentUser = res.user; localStorage.setItem('blaze_user', JSON.stringify(currentUser)); loadProfile(); } } catch(e) { console.error('Error fetching user', e); } }
+async function fetchUser() { try { var res = await api('GET', '/api/user/profile'); if (res && res.user) { currentUser = res.user; localStorage.setItem('blaze_user', JSON.stringify(currentUser)); loadProfile(); updateVendorUI(); } } catch(e) { console.error('Error fetching user', e); } }
 
 async function saveProfile(){
   if(!currentUser){showToast('No user logged in','#FF3B3B');return;}
@@ -3447,6 +3456,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(savedUser){
             try{currentUser=JSON.parse(savedUser);}catch(e){}
             if(currentUser){
+                updateVendorUI();
                 showPage('dashboard');
                 showPanel('home');
                 syncBottomNav('home');
