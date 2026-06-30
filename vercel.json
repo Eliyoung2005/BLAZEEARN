@@ -3,7 +3,25 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "users.db",
+          "index.html",
+          "admin.html",
+          "staff.html",
+          "logo.png",
+          "hero_image.png",
+          "earnings_structure.jpg",
+          "data_reward_flyer.jpg",
+          "login_bg.jpg",
+          "styles.css",
+          "style1.css",
+          "style2.css",
+          "script.js",
+          "admin.js"
+        ]
+      }
     }
   ],
   "routes": [
