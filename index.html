@@ -822,14 +822,12 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
     <div class="fg">
       <label>Coupon Code</label>
       <input type="text" id="reg-coupon" placeholder="Enter coupon code" style="text-transform:uppercase;">
-      <div class="hint">No code? <a href="javascript:void(0)" onclick="showPage('landing'); setTimeout(function(){ document.getElementById('vendors-section').scrollIntoView({behavior:'smooth'}); }, 100);" style="color:var(--gold); text-decoration:underline;">Pay N1000 to any vendor on the homepage to get one.</a></div>
     </div>
     <div class="fg">
       <label>Referral Code (Optional)</label>
       <input type="text" id="reg-ref" placeholder="Referral username" style="text-transform:lowercase;">
     </div>
     <div class="fg"><label>Create Password</label><input type="password" id="reg-pass" placeholder="Minimum 6 characters"></div>
-    <div class="notice">💡 <span>Pay <strong>N1000</strong> to any approved vendor and they will send you your coupon code.</span></div>
     <button class="btn btn-blaze btn-full" onclick="handleRegister()">Activate My Account</button>
     <div class="auth-foot">Already have an account? <a href=javascript:void(0) onclick="showPage('login')">Login here</a></div>
   </div>
