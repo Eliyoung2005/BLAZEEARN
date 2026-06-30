@@ -1,0 +1,13 @@
+node_modules/
+*.db
+*.sqlite
+*.log
+cloudflared.exe
+temp.js
+req.json
+diff.txt
+pw_search.txt
+theme_search.txt
+found_html_end.txt
+.system_generated/
+*.bat

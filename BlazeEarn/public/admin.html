@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BlazeEarn Admin Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--dark:#0a0a0a;--card:#141414;--card2:#1a1a1a;--border:#2a2a2a;--text:#ffffff;--muted:#a0a0a0;--fire:#FF4500;--gold:#FFB800;--green:#00FF88;}
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--dark); color:var(--text); display:flex; align-items:center; justify-content:center; height:100vh; }
+    .access-box { width:100%; max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:36px; }
+    .access-box h2 { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; letter-spacing:0.04em; margin-bottom:4px; text-align:center; }
+    .fg { margin-bottom:16px; }
+    .fg label { font-size:0.7rem; font-weight:600; color:var(--muted); display:block; margin-bottom:7px; letter-spacing:0.06em; text-transform:uppercase; }
+    .fg input { width:100%; background:var(--card2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; color:var(--text); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none; transition:border-color 0.2s; }
+    .fg input:focus { border-color:var(--fire); }
+    .btn-blaze { background:linear-gradient(90deg,var(--fire),var(--gold)); color:#fff; border:none; padding:12px 24px; font-weight:600; cursor:pointer; width:100%; border-radius:8px; margin-top:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:1rem; }
+  </style>
+</head>
+<body>
+  <div class="access-box">
+    <div style="text-align:center;margin-bottom:20px;font-size:2.5rem;">🔐</div>
+    <h2>ADMIN LOGIN</h2>
+    <p style="text-align:center; color:var(--muted); margin-bottom: 20px; font-size: 0.85rem;">Authorised Access Only</p>
+    <div class="fg"><label>Username</label><input type="text" id="su" placeholder="admin username"></div>
+    <div class="fg"><label>Password</label><input type="password" id="sp" placeholder="admin password"></div>
+    <button class="btn-blaze" onclick="doLogin()">Access Admin Panel</button>
+  </div>
+  <script>
+    async function doLogin(){
+      var u = document.getElementById('su').value.trim();
+      var p = document.getElementById('sp').value.trim();
+      try {
+        var res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Bypass-Tunnel-Reminder': 'true'
+          },
+          body: JSON.stringify({username: u, password: p})
+        });
+        var data = await res.json();
+        if(data.token){
+          localStorage.setItem('blaze_admin_token', data.token);
+          window.location.href = '/staff-dashboard?v=' + Date.now();
+        } else {
+          alert(data.error || 'Invalid credentials');
+        }
+      } catch(e) {
+        alert('Login failed: ' + e.message);
+      }
+    }
+  </script>
+</body>
+</html>

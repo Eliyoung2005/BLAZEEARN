@@ -1,0 +1,4 @@
+node_modules/
+.env
+blazeearn.db
+*.db
