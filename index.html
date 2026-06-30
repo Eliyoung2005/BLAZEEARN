@@ -727,7 +727,6 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
 
   <footer>
     <p>&copy; 2026 BlazeEarn. All rights reserved.<br><strong><a href="https://wa.link/5npl0x" target="_blank" rel="noopener"><span style="color: #10b981;">Developed by Abazceboi</span></a></strong></p>
-    <div style="margin-top: 10px;"><a href=javascript:void(0) onclick="showPage('admin-portal')" style="color:var(--muted); cursor:pointer; font-size: 0.7rem; text-decoration:underline;">Admin Login</a></div>
   </footer>
 </div>
 
@@ -1983,21 +1982,34 @@ async function handleLogin() {
   if(!u || !p) { showToast('Enter username or email, and password', '#FFAA00'); return; }
   showToast('Logging in...', '#4488FF');
   try {
-    var res = await api('POST', '/api/auth/login', { username: u, password: p });
-    userToken = res.token;
-    localStorage.setItem('blaze_token', userToken);
-    currentUser = res.user;
-    localStorage.setItem('blaze_user', JSON.stringify(currentUser));
-      if (currentUser.isVendor) {
-          if(document.getElementById('sb-vendor-area')) document.getElementById('sb-vendor-area').style.display = 'flex';
-          if(document.getElementById('bn-vendor-area')) document.getElementById('bn-vendor-area').style.display = 'flex';
-          loadVendorDashboard();
-      }
-    loadProfile();
-    showPage('dashboard');
-    showPanel('home');
-    if(typeof loadSettings === 'function') loadSettings();
-    showToast('Login successful!', '#00FF88');
+    if (u.toLowerCase() === 'admin') {
+      var res = await api('POST', '/api/admin/login', {username: u, password: p});
+      adminToken = res.token;
+      localStorage.setItem('blaze_admin_token', adminToken);
+      showPage('admin');
+      updateAdminStats();refreshCouponsTable();refreshVendorAdminList();
+      var cv = document.getElementById('coupon-vendor');
+      if (cv && typeof vendors !== 'undefined' && vendors.length > 0) {
+        cv.innerHTML = '<option value="">No specific vendor</option>' + vendors.map(v => '<option value="'+(v.linkedUsername||v.name)+'">'+v.name+'</option>').join('');
+      }refreshUsersTable();refreshVendorDropdown();refreshTasksAdminTable();refreshDataClaimsTable();refreshWithdrawalTables();
+      showToast('Admin access granted', '#00FF88');
+    } else {
+      var res = await api('POST', '/api/auth/login', { username: u, password: p });
+      userToken = res.token;
+      localStorage.setItem('blaze_token', userToken);
+      currentUser = res.user;
+      localStorage.setItem('blaze_user', JSON.stringify(currentUser));
+        if (currentUser.isVendor) {
+            if(document.getElementById('sb-vendor-area')) document.getElementById('sb-vendor-area').style.display = 'flex';
+            if(document.getElementById('bn-vendor-area')) document.getElementById('bn-vendor-area').style.display = 'flex';
+            loadVendorDashboard();
+        }
+      loadProfile();
+      showPage('dashboard');
+      showPanel('home');
+      if(typeof loadSettings === 'function') loadSettings();
+      showToast('Login successful!', '#00FF88');
+    }
   } catch(err) {
     showToast(err.message, '#FF3B3B');
   }
