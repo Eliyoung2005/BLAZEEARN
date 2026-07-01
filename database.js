@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 
 const isVercel = process.env.VERCEL || process.env.NOW_BUILDER;
-const usePostgres = !!(process.env.POSTGRES_URL || process.env.DATABASE_URL);
+const usePostgres = !!(process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.STORAGE_URL);
 
 let db = null;
 let importError = null;
@@ -36,7 +36,7 @@ if (usePostgres) {
     try {
         const { Pool } = require('pg');
         const pool = new Pool({
-            connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL,
+            connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.STORAGE_URL,
             ssl: {
                 rejectUnauthorized: false
             }
