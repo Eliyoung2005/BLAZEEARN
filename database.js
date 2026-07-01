@@ -1,67 +1,188 @@
-let sqlite3;
-let importError = null;
-try {
-    sqlite3 = require('sqlite3').verbose();
-} catch (e) {
-    importError = e;
-    console.error('Failed to import sqlite3:', e.message);
-}
-
 const path = require('path');
 const fs = require('fs');
-const isVercel = process.env.VERCEL || process.env.NOW_BUILDER;
-let dbPath = path.resolve(__dirname, 'users.db');
 
-if (isVercel) {
-    const tempDbPath = path.join('/tmp', 'users.db');
-    if (!fs.existsSync(tempDbPath)) {
-        try {
-            if (fs.existsSync(dbPath)) {
-                fs.copyFileSync(dbPath, tempDbPath);
-                console.log('Copied database to /tmp');
-            } else {
-                console.log('Template database users.db not found, creating a new one.');
-            }
-        } catch (e) {
-            console.error('Failed to copy database to /tmp:', e);
-        }
+const isVercel = process.env.VERCEL || process.env.NOW_BUILDER;
+const usePostgres = !!(process.env.POSTGRES_URL || process.env.DATABASE_URL);
+
+let db = null;
+let importError = null;
+
+function sqliteToPgSql(sql) {
+    if (!sql) return sql;
+    let translated = sql
+        .replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY')
+        .replace(/DATETIME DEFAULT CURRENT_TIMESTAMP/gi, 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        .replace(/BOOLEAN DEFAULT 0/gi, 'BOOLEAN DEFAULT FALSE')
+        .replace(/BOOLEAN DEFAULT 1/gi, 'BOOLEAN DEFAULT TRUE')
+        .replace(/MAX\(/gi, 'GREATEST(');
+    
+    if (sql.includes('INSERT OR IGNORE INTO settings')) {
+        translated = 'INSERT INTO settings (id) VALUES (1) ON CONFLICT DO NOTHING';
     }
-    dbPath = tempDbPath;
+    
+    // Auto-append RETURNING id to INSERT queries
+    if (/^\s*INSERT/i.test(translated) && !/RETURNING/i.test(translated)) {
+        translated += ' RETURNING id';
+    }
+    
+    // Translate placeholders ? to $1, $2, etc.
+    let index = 1;
+    translated = translated.replace(/\?/g, () => `$${index++}`);
+    return translated;
 }
 
-let db;
-if (sqlite3) {
-    db = new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-            console.error('Error connecting to SQLite database:', err.message);
-        } else {
-            console.log('Connected to the SQLite database.');
+if (usePostgres) {
+    console.log('Using PostgreSQL database client...');
+    try {
+        const { Pool } = require('pg');
+        const pool = new Pool({
+            connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL,
+            ssl: {
+                rejectUnauthorized: false
+            }
+        });
+
+        db = {
+            run: function(sql, params, callback) {
+                const cb = typeof params === 'function' ? params : callback;
+                const actualParams = typeof params === 'function' ? [] : params;
+                const pgSql = sqliteToPgSql(sql);
+                pool.query(pgSql, actualParams, function(err, res) {
+                    if (err) {
+                        // Map PostgreSQL duplicate key constraint message to SQLite format
+                        if (err.code === '23505' || err.message.includes('unique constraint')) {
+                            if (err.message.includes('email') || (err.detail && err.detail.includes('email'))) {
+                                err.message = 'UNIQUE constraint failed: users.email';
+                            } else if (err.message.includes('username') || (err.detail && err.detail.includes('username'))) {
+                                err.message = 'UNIQUE constraint failed: users.username';
+                            }
+                        }
+                        if (cb) cb(err);
+                        return;
+                    }
+                    if (cb) {
+                        const context = {
+                            lastID: (res.rows && res.rows[0] && (res.rows[0].id || res.rows[0].lastid)) || null,
+                            changes: res.rowCount
+                        };
+                        cb.call(context, null);
+                    }
+                });
+                return this;
+            },
+            get: function(sql, params, callback) {
+                const cb = typeof params === 'function' ? params : callback;
+                const actualParams = typeof params === 'function' ? [] : params;
+                const pgSql = sqliteToPgSql(sql);
+                pool.query(pgSql, actualParams, (err, res) => {
+                    if (err) {
+                        if (cb) cb(err);
+                        return;
+                    }
+                    if (cb) cb(null, res.rows[0] || null);
+                });
+                return this;
+            },
+            all: function(sql, params, callback) {
+                const cb = typeof params === 'function' ? params : callback;
+                const actualParams = typeof params === 'function' ? [] : params;
+                const pgSql = sqliteToPgSql(sql);
+                pool.query(pgSql, actualParams, (err, res) => {
+                    if (err) {
+                        if (cb) cb(err);
+                        return;
+                    }
+                    if (cb) cb(null, res.rows || []);
+                });
+                return this;
+            },
+            serialize: function(callback) {
+                if (callback) callback();
+                return this;
+            },
+            prepare: function(sql) {
+                // Mock prepare statement for completeness
+                return {
+                    run: (params, callback) => {
+                        this.run(sql, params, callback);
+                    },
+                    finalize: () => {}
+                };
+            }
+        };
+
+        // Initialize the database tables on Postgres startup
+        setTimeout(() => {
             initializeDatabase();
-        }
-    });
+        }, 100);
+
+    } catch (e) {
+        importError = e;
+        console.error('Failed to initialize PostgreSQL client:', e);
+    }
 } else {
-    console.warn('Database initialization skipped: sqlite3 is not loaded.');
-    db = {
-        run: function(sql, params, callback) {
-            const cb = typeof params === 'function' ? params : callback;
-            if (cb) cb(new Error('Database not available: ' + (importError ? importError.message : 'Unknown error')));
-            return this;
-        },
-        get: function(sql, params, callback) {
-            const cb = typeof params === 'function' ? params : callback;
-            if (cb) cb(new Error('Database not available: ' + (importError ? importError.message : 'Unknown error')));
-            return this;
-        },
-        all: function(sql, params, callback) {
-            const cb = typeof params === 'function' ? params : callback;
-            if (cb) cb(new Error('Database not available: ' + (importError ? importError.message : 'Unknown error')));
-            return this;
-        },
-        serialize: function(callback) {
-            if (callback) callback();
-            return this;
+    // Falls back to SQLite
+    console.log('Using SQLite database client...');
+    let sqlite3;
+    try {
+        sqlite3 = require('sqlite3').verbose();
+    } catch (e) {
+        importError = e;
+        console.error('Failed to import sqlite3:', e.message);
+    }
+
+    let dbPath = path.resolve(__dirname, 'users.db');
+
+    if (isVercel) {
+        const tempDbPath = path.join('/tmp', 'users.db');
+        if (!fs.existsSync(tempDbPath)) {
+            try {
+                if (fs.existsSync(dbPath)) {
+                    fs.copyFileSync(dbPath, tempDbPath);
+                    console.log('Copied database to /tmp');
+                } else {
+                    console.log('Template database users.db not found, creating a new one.');
+                }
+            } catch (e) {
+                console.error('Failed to copy database to /tmp:', e);
+            }
         }
-    };
+        dbPath = tempDbPath;
+    }
+
+    if (sqlite3) {
+        db = new sqlite3.Database(dbPath, (err) => {
+            if (err) {
+                console.error('Error connecting to SQLite database:', err.message);
+            } else {
+                console.log('Connected to the SQLite database.');
+                initializeDatabase();
+            }
+        });
+    } else {
+        console.warn('Database initialization skipped: sqlite3 is not loaded.');
+        db = {
+            run: function(sql, params, callback) {
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(new Error('Database not available: ' + (importError ? importError.message : 'Unknown error')));
+                return this;
+            },
+            get: function(sql, params, callback) {
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(new Error('Database not available: ' + (importError ? importError.message : 'Unknown error')));
+                return this;
+            },
+            all: function(sql, params, callback) {
+                const cb = typeof params === 'function' ? params : callback;
+                if (cb) cb(new Error('Database not available: ' + (importError ? importError.message : 'Unknown error')));
+                return this;
+            },
+            serialize: function(callback) {
+                if (callback) callback();
+                return this;
+            }
+        };
+    }
 }
 
 function initializeDatabase() {
