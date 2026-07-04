@@ -207,7 +207,7 @@ if (usePostgres) {
         console.error('Failed to import sqlite3:', e.message);
     }
 
-    let dbPath = path.resolve(__dirname, 'users.db');
+    let dbPath = process.env.DATABASE_PATH || path.resolve(__dirname, 'users.db');
 
     if (isVercel) {
         const tempDbPath = path.join('/tmp', 'users.db');
@@ -224,6 +224,17 @@ if (usePostgres) {
             }
         }
         dbPath = tempDbPath;
+    } else {
+        // Ensure the directory for the database exists (especially important for custom volume paths)
+        const dbDir = path.dirname(dbPath);
+        if (!fs.existsSync(dbDir)) {
+            try {
+                fs.mkdirSync(dbDir, { recursive: true });
+                console.log('Created database directory:', dbDir);
+            } catch (e) {
+                console.error('Failed to create database directory:', e);
+            }
+        }
     }
 
     if (sqlite3) {
