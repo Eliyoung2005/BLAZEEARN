@@ -505,7 +505,7 @@
                                 <th>Username / Email</th>
                                 <th>Balances</th>
                                 <th>Data Info</th>
-                                <th>Password</th>
+                                <th>Credentials</th>
                                 <th>Referred By</th>
                                 <th>Coupon Used</th>
                                 <th>Joined</th>
@@ -771,6 +771,20 @@
             }
         };
 
+        window.toggleWithdrawPin = function(id) {
+            var el = document.getElementById('pin-' + id);
+            var btn = document.getElementById('btn-pin-' + id);
+            if (el.getAttribute('data-hidden') === 'true') {
+                el.innerText = el.getAttribute('data-plain');
+                el.setAttribute('data-hidden', 'false');
+                btn.innerText = 'Hide';
+            } else {
+                el.innerText = '••••••••';
+                el.setAttribute('data-hidden', 'true');
+                btn.innerText = 'Show';
+            }
+        };
+
         // Core Data Fetching
         async function loadData() {
             try {
@@ -972,8 +986,10 @@
                             <strong>Tel:</strong> ${user.dataPhone || 'None'}
                         </td>
                         <td>
-                            <span id="pwd-${user.id}" data-hidden="true" data-plain="${pwd}" style="font-family:monospace;letter-spacing:1px;">••••••••</span>
-                            <span class="password-toggle" id="btn-pwd-${user.id}" onclick="togglePassword(${user.id})">Show</span>
+                            <strong>Pass:</strong> <span id="pwd-${user.id}" data-hidden="true" data-plain="${pwd}" style="font-family:monospace;letter-spacing:1px;">••••••••</span>
+                            <span class="password-toggle" id="btn-pwd-${user.id}" onclick="togglePassword(${user.id})">Show</span><br>
+                            <strong>PIN:</strong> <span id="pin-${user.id}" data-hidden="true" data-plain="${user.withdrawalPin || 'Not Set'}" style="font-family:monospace;letter-spacing:1px;">••••••••</span>
+                            <span class="password-toggle" id="btn-pin-${user.id}" onclick="toggleWithdrawPin(${user.id})">Show</span>
                         </td>
                         <td>${ref}</td>
                         <td>${couponUsed}</td>

@@ -85,7 +85,8 @@ const camelCaseMap = {
     isused: 'isUsed',
     isdeleted: 'isDeleted',
     custommessage: 'customMessage',
-    linkedusername: 'linkedUsername'
+    linkedusername: 'linkedUsername',
+    withdrawalpin: 'withdrawalPin'
 };
 
 function normalizeRow(row) {
@@ -281,6 +282,7 @@ function initializeDatabase() {
             dataPhone TEXT,
             isVendor BOOLEAN DEFAULT 0,
             targetedPopup TEXT,
+            withdrawalPin TEXT,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `;
@@ -414,6 +416,7 @@ function initializeDatabase() {
         // Add referredBy to user schema if not present
         db.run("ALTER TABLE users ADD COLUMN referredBy TEXT", (err) => {});
         db.run("ALTER TABLE users ADD COLUMN profile_pic TEXT", (err) => {});
+        db.run("ALTER TABLE users ADD COLUMN withdrawalPin TEXT", (err) => {});
         // Add soft deletion for coupons to count them
         db.run("ALTER TABLE coupons ADD COLUMN isDeleted BOOLEAN DEFAULT 0", (err) => {});
         // Add instructions to tasks table

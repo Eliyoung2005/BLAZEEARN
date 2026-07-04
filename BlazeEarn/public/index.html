@@ -860,7 +860,16 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
             <div class="fg"><label>Amount to Withdraw (N)</label><input type="number" id="wd-amount" placeholder="Enter amount" min="100"></div>
           </div>
 
-          <button style="margin-top:20px;background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.88rem;padding:13px 30px;border-radius:8px;border:none;cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 22px rgba(255,69,0,0.35)'" onmouseout="this.style.transform='none';this.style.boxShadow='none'" onclick="submitWithdrawal()">
+          <div id="wd-pin-warning" style="background:rgba(255,59,59,0.1);border:1px solid rgba(255,59,59,0.3);color:var(--red);border-radius:10px;padding:14px 18px;margin-top:16px;font-size:0.85rem;display:none;">
+            ⚠️ You have not set a Withdrawal PIN yet. You must set a 4-digit PIN on your <a href="#" onclick="showPanel('profile',document.getElementById('bn-profile')||this); return false;" style="color:var(--gold);text-decoration:underline;">Profile</a> page before you can request withdrawals.
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;margin-bottom:16px;">
+            <div class="fg"><label>Withdrawal PIN</label><input type="password" id="wd-pin" placeholder="Enter 4-digit PIN" maxlength="4" pattern="\d{4}" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+            <div class="fg"><label>Account Password</label><input type="password" id="wd-password" placeholder="Or enter your password"></div>
+          </div>
+
+          <button id="wd-submit-btn" style="margin-top:20px;background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.88rem;padding:13px 30px;border-radius:8px;border:none;cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 22px rgba(255,69,0,0.35)'" onmouseout="this.style.transform='none';this.style.boxShadow='none'" onclick="submitWithdrawal()">
             Submit Withdrawal Request
           </button>
         </div>
@@ -1029,6 +1038,16 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
           <div class="fg" style="margin-bottom:0;"><label>Confirm Password</label><input type="password" id="profile-confirmpass" placeholder="Repeat new password"></div>
         </div>
         <button style="margin-top:20px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.86rem;padding:12px 28px;border-radius:8px;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;" onclick="changePassword()">Update Password</button>
+      </div>
+
+      <!-- Withdrawal PIN -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:18px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.04em;margin-bottom:4px;">WITHDRAWAL PIN</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px;">Set or update your 4-digit security PIN for withdrawals.</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:14px;max-width:300px;">
+          <div class="fg" style="margin-bottom:0;"><label>Withdrawal PIN</label><input type="password" id="profile-withdraw-pin" placeholder="Enter 4-digit PIN" maxlength="4" pattern="\d{4}" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+        </div>
+        <button style="margin-top:20px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.86rem;padding:12px 28px;border-radius:8px;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;" onclick="updateWithdrawalPin()">Update PIN</button>
       </div>
 
       <!-- Log Out (Mobile Friendly) -->
@@ -1972,6 +1991,28 @@ function openWdForm(type){
   document.getElementById('wd-accnum').value='';
   document.getElementById('wd-bank').value='';
   document.getElementById('wd-amount').value='';
+  if (document.getElementById('wd-pin')) document.getElementById('wd-pin').value='';
+  if (document.getElementById('wd-password')) document.getElementById('wd-password').value='';
+
+  var hasPin = currentUser && currentUser.withdrawalPin;
+  var warningEl = document.getElementById('wd-pin-warning');
+  var submitBtn = document.getElementById('wd-submit-btn');
+  if (!hasPin) {
+    if (warningEl) warningEl.style.display = 'block';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.5';
+      submitBtn.style.cursor = 'not-allowed';
+    }
+  } else {
+    if (warningEl) warningEl.style.display = 'none';
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }
+  }
+
   if(type==='activity'){
     document.getElementById('wd-form-title').textContent='ACTIVITY WITHDRAWAL';
     document.getElementById('wd-avail-bal').textContent='N'+actBal.toLocaleString()+'.00';
@@ -2000,13 +2041,24 @@ async function submitWithdrawal(){
   var amount=parseInt(document.getElementById('wd-amount').value)||0;
   if(!accname||!accnum||!bank||!amount){showToast('Please fill in all bank details!','#FFB800');return;}
   if(accnum.length!==10){showToast('Account number must be 10 digits!','#FFB800');return;}
+  var pin=document.getElementById('wd-pin').value.trim();
+  var password=document.getElementById('wd-password').value.trim();
+  if(!pin && !password){showToast('Please enter your withdrawal PIN or account password to authorize!','#FFB800');return;}
+  
   var avail=type==='activity'?currentUser.activity_balance:currentUser.referral_balance;
   if(amount>avail){showToast('Insufficient balance!','#FF3B3B');return;}
   var minLimit = type === 'activity' ? minActWd : minRefWd;
   if(amount < minLimit){showToast('Minimum withdrawal is ₦'+minLimit,'#FF3B3B');return;}
+  
+  showToast('Processing withdrawal...', '#4488FF');
   try {
-    var payload = { type: type, amount: amount, bank: bank, accnum: accnum, accname: accname };
+    var payload = { type: type, amount: amount, bank: bank, accnum: accnum, accname: accname, pin: pin, password: password };
     await api('POST', '/api/withdrawals', payload, false);
+    
+    // Clear authorization inputs
+    document.getElementById('wd-pin').value='';
+    document.getElementById('wd-password').value='';
+    
     // Update local currentUser balances directly so the UI responds immediately
     if(type==='activity'){currentUser.activity_balance-=amount;}else{currentUser.referral_balance-=amount;}
     currentUser.total_balance-=amount;
@@ -2016,6 +2068,8 @@ async function submitWithdrawal(){
     closeWdForm();
     showToast('Withdrawal request submitted securely!','#00FF88');
   } catch(err) {
+    if (document.getElementById('wd-pin')) document.getElementById('wd-pin').value='';
+    if (document.getElementById('wd-password')) document.getElementById('wd-password').value='';
     showToast(err.message, '#FF3B3B');
   }
 }
@@ -2687,6 +2741,8 @@ function loadProfile(){
   document.getElementById('profile-username').value=username;
   document.getElementById('profile-phone').value=phone;
   document.getElementById('profile-email').value=email;
+  var pinInput = document.getElementById('profile-withdraw-pin');
+  if (pinInput) pinInput.value = currentUser.withdrawalPin || '';
 
   // Update profile card display
   var initials = 'U';
@@ -2926,6 +2982,27 @@ async function changePassword(){
       showToast('Password updated successfully!','#00FF88');
     } else {
       showToast(res.error || 'Failed to update password', '#FF3B3B');
+    }
+  } catch(e) {
+    showToast('An error occurred', '#FF3B3B');
+  }
+}
+
+async function updateWithdrawalPin() {
+  var pin = document.getElementById('profile-withdraw-pin').value.trim();
+  if (!pin || !/^\d{4}$/.test(pin)) {
+    showToast('PIN must be exactly 4 digits!', '#FFAA00');
+    return;
+  }
+  showToast('Updating PIN...', '#4488FF');
+  try {
+    var res = await api('PUT', '/api/user/withdraw-pin', { pin: pin });
+    if(res.success) {
+      document.getElementById('profile-withdraw-pin').value = pin;
+      showToast('Withdrawal PIN updated successfully!', '#00FF88');
+      fetchUser();
+    } else {
+      showToast(res.error || 'Failed to update PIN', '#FF3B3B');
     }
   } catch(e) {
     showToast('An error occurred', '#FF3B3B');

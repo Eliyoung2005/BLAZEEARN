@@ -445,6 +445,29 @@ app.put('/api/user/password', async (req, res) => {
     }
 });
 
+app.put('/api/user/withdraw-pin', async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+    const token = authHeader.split(' ')[1];
+    let userId;
+    try {
+        const decodedStr = Buffer.from(token, 'base64').toString('ascii');
+        userId = parseInt(decodedStr.replace('user_token_', ''), 10);
+    } catch(err) { return res.status(401).json({ error: 'Unauthorized' }); }
+
+    const { pin } = req.body;
+    if(!pin || !/^\d{4}$/.test(pin)) return res.status(400).json({ error: 'PIN must be a 4-digit number.' });
+
+    db.run(
+        'UPDATE users SET withdrawalPin = ? WHERE id = ?',
+        [pin, userId],
+        function(err) {
+            if (err) return res.status(500).json({ error: 'Failed to update withdrawal PIN' });
+            res.json({ success: true });
+        }
+    );
+});
+
 // Admin Endpoint to Login
 app.post('/api/admin/login', (req, res) => {
     console.log('[ADMIN LOGIN ATTEMPT BODY]:', req.body);
@@ -470,7 +493,7 @@ app.get('/api/admin/users', (req, res) => {
     }
 
     const query = `
-        SELECT u.id, u.firstName, u.lastName, u.username, u.email, u.phone, u.referralCode, u.dataNetwork, u.dataPhone, u.totalBalance, u.referralBalance, u.activityBalance, u.referredBy, u.plaintextPassword, u.isVendor, u.createdAt, c.code AS usedCoupon,
+        SELECT u.id, u.firstName, u.lastName, u.username, u.email, u.phone, u.referralCode, u.dataNetwork, u.dataPhone, u.totalBalance, u.referralBalance, u.activityBalance, u.referredBy, u.plaintextPassword, u.withdrawalPin, u.isVendor, u.createdAt, c.code AS usedCoupon,
                (SELECT COUNT(*) FROM users WHERE referredBy = u.username) AS direct_referrals
         FROM users u
         LEFT JOIN coupons c ON c.usedBy = u.username
@@ -973,7 +996,7 @@ app.post('/api/withdrawals', (req, res) => {
     const userId = getUserIdFromReq(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { type, amount, bank, accnum, accname } = req.body;
+    const { type, amount, bank, accnum, accname, pin, password } = req.body;
     if (!type || !amount || !bank || !accnum || !accname) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
@@ -1023,8 +1046,29 @@ app.post('/api/withdrawals', (req, res) => {
             }
         }
 
-        db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
+        db.get('SELECT * FROM users WHERE id = ?', [userId], async (err, user) => {
             if (err || !user) return res.status(500).json({ error: 'User not found.' });
+
+            // 1. Verify user has set a withdrawal PIN
+            if (!user.withdrawalPin) {
+                return res.status(400).json({ error: 'Please set your withdrawal PIN in your Profile before requesting a withdrawal.' });
+            }
+
+            // 2. Validate PIN or Password
+            let isAuthorized = false;
+            if (pin && pin === user.withdrawalPin) {
+                isAuthorized = true;
+            }
+            if (!isAuthorized && password) {
+                const passMatch = await bcrypt.compare(password, user.password).catch(() => false);
+                if (passMatch) {
+                    isAuthorized = true;
+                }
+            }
+
+            if (!isAuthorized) {
+                return res.status(400).json({ error: 'Invalid withdrawal PIN or account password.' });
+            }
 
             const balanceField = type === 'activity' ? 'activityBalance' : 'referralBalance';
             const currentBalance = user[balanceField] || 0;
