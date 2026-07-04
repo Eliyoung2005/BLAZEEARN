@@ -28,6 +28,15 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Disable caching for all API endpoints
+app.use('/api', (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    next();
+});
+
 // Log all incoming requests for debugging
 app.use((req, res, next) => {
     console.log(`[REQUEST] ${req.method} ${req.url}`);
@@ -163,7 +172,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     try {
         // First check if coupon is valid
-        db.get('SELECT * FROM coupons WHERE code = ? AND isUsed = 0 AND (isDeleted IS NULL OR isDeleted = 0)', [coupon_code], (err, coupon) => {
+        db.get('SELECT * FROM coupons WHERE code = ? AND isUsed = FALSE AND (isDeleted IS NULL OR isDeleted = FALSE)', [coupon_code], (err, coupon) => {
             if (err) {
                 console.error('Database error:', err.message);
                 return res.status(500).json({ error: 'Internal server error.' });
@@ -200,7 +209,7 @@ app.post('/api/auth/register', async (req, res) => {
                         const newUserId = this.lastID;
 
                         // Mark coupon as used and associate it with the new user's username
-                        db.run('UPDATE coupons SET isUsed = 1, usedBy = ? WHERE code = ?', [username, coupon_code], function(err) {
+                        db.run('UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?', [username, coupon_code], function(err) {
                             if (err) {
                                 console.error('Error updating coupon:', err.message);
                             }
@@ -461,7 +470,8 @@ app.get('/api/admin/users', (req, res) => {
     }
 
     const query = `
-        SELECT u.id, u.firstName, u.lastName, u.username, u.email, u.phone, u.referralCode, u.dataNetwork, u.dataPhone, u.totalBalance, u.referralBalance, u.activityBalance, u.referredBy, u.plaintextPassword, u.isVendor, u.createdAt, c.code AS usedCoupon
+        SELECT u.id, u.firstName, u.lastName, u.username, u.email, u.phone, u.referralCode, u.dataNetwork, u.dataPhone, u.totalBalance, u.referralBalance, u.activityBalance, u.referredBy, u.plaintextPassword, u.isVendor, u.createdAt, c.code AS usedCoupon,
+               (SELECT COUNT(*) FROM users WHERE referredBy = u.username) AS direct_referrals
         FROM users u
         LEFT JOIN coupons c ON c.usedBy = u.username
         ORDER BY u.id DESC
@@ -526,7 +536,7 @@ app.put('/api/admin/users/:id/vendor', (req, res) => {
     db.get('SELECT * FROM users WHERE id = ?', [req.params.id], (err, user) => {
         if (err || !user) return res.status(404).json({ error: 'User not found' });
         
-        db.run('UPDATE users SET isVendor = 1 WHERE id = ?', [req.params.id], function(err) {
+        db.run('UPDATE users SET isVendor = TRUE WHERE id = ?', [req.params.id], function(err) {
             if (err) return res.status(500).json({ error: 'Failed to upgrade user' });
             
             // Also insert into vendors table
@@ -548,7 +558,7 @@ app.put('/api/admin/users/:id/remove-vendor', (req, res) => {
     db.get('SELECT * FROM users WHERE id = ?', [req.params.id], (err, user) => {
         if (err || !user) return res.status(404).json({ error: 'User not found' });
         
-        db.run('UPDATE users SET isVendor = 0 WHERE id = ?', [req.params.id], function(err) {
+        db.run('UPDATE users SET isVendor = FALSE WHERE id = ?', [req.params.id], function(err) {
             if (err) return res.status(500).json({ error: 'Failed to demote user' });
             
             // Also delete from vendors table
@@ -763,7 +773,7 @@ app.delete('/api/admin/coupons/:code', (req, res) => {
     const authHeader = req.headers['authorization'];
     if (authHeader !== 'Bearer admin123') return res.status(401).json({ error: 'Unauthorized' });
 
-    db.run('UPDATE coupons SET isDeleted = 1 WHERE code = ?', [req.params.code], function(err) {
+    db.run('UPDATE coupons SET isDeleted = TRUE WHERE code = ?', [req.params.code], function(err) {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.status(200).json({ success: true, message: 'Settings updated' });
     });
@@ -862,7 +872,9 @@ app.get('/api/settings/public', (req, res) => {
             referralWithdrawStartTime: '00:00',
             referralWithdrawEndTime: '23:59',
             activityWithdrawStartTime: '00:00',
-            activityWithdrawEndTime: '23:59'
+            activityWithdrawEndTime: '23:59',
+            referralWithdrawEnabled: 1,
+            activityWithdrawEnabled: 1
         };
 
         res.status(200).json({
@@ -886,10 +898,11 @@ app.get('/api/settings/public', (req, res) => {
                 referralWithdrawEndTime: settings.referralWithdrawEndTime,
                 activityWithdrawStartTime: settings.activityWithdrawStartTime,
                 activityWithdrawEndTime: settings.activityWithdrawEndTime,
+                referralWithdrawEnabled: settings.referralWithdrawEnabled !== undefined ? settings.referralWithdrawEnabled : 1,
+                activityWithdrawEnabled: settings.activityWithdrawEnabled !== undefined ? settings.activityWithdrawEnabled : 1,
                 dataClaimReferralsRequired: settings.dataClaimReferralsRequired,
                 popupMessage: settings.popupMessage || "",
-                    welcomeMessage: settings.welcomeMessage || "",
-                    welcomeMessage: settings.welcomeMessage || ""
+                welcomeMessage: settings.welcomeMessage || ""
             }
         });
     });
@@ -900,7 +913,7 @@ app.put('/api/admin/settings', (req, res) => {
     const authHeader = req.headers['authorization'];
     if (authHeader !== 'Bearer admin123') return res.status(401).json({ error: 'Unauthorized' });
 
-    const { minWithdrawalActivity, minWithdrawalReferral, withdrawStartTime, withdrawEndTime, referralWithdrawDates, activityWithdrawDates, referralWithdrawDays, activityWithdrawDays, referralWithdrawStartTime, referralWithdrawEndTime, activityWithdrawStartTime, activityWithdrawEndTime, adminPassword, dataClaimReferralsRequired, popupMessage, welcomeMessage, emailVerificationEnabled, smtpHost, smtpPort, smtpUser, smtpPass, autoPaymentEnabled, gatewaySecretKey } = req.body;
+    const { minWithdrawalActivity, minWithdrawalReferral, withdrawStartTime, withdrawEndTime, referralWithdrawDates, activityWithdrawDates, referralWithdrawDays, activityWithdrawDays, referralWithdrawStartTime, referralWithdrawEndTime, activityWithdrawStartTime, activityWithdrawEndTime, referralWithdrawEnabled, activityWithdrawEnabled, adminPassword, dataClaimReferralsRequired, popupMessage, welcomeMessage, emailVerificationEnabled, smtpHost, smtpPort, smtpUser, smtpPass, autoPaymentEnabled, gatewaySecretKey } = req.body;
     
     // Only update fields that are provided
     let updates = [];
@@ -917,17 +930,11 @@ app.put('/api/admin/settings', (req, res) => {
     if (referralWithdrawEndTime !== undefined) { updates.push('referralWithdrawEndTime = ?'); params.push(referralWithdrawEndTime); }
     if (activityWithdrawStartTime !== undefined) { updates.push('activityWithdrawStartTime = ?'); params.push(activityWithdrawStartTime); }
     if (activityWithdrawEndTime !== undefined) { updates.push('activityWithdrawEndTime = ?'); params.push(activityWithdrawEndTime); }
+    if (referralWithdrawEnabled !== undefined) { updates.push('referralWithdrawEnabled = ?'); params.push(referralWithdrawEnabled ? 1 : 0); }
+    if (activityWithdrawEnabled !== undefined) { updates.push('activityWithdrawEnabled = ?'); params.push(activityWithdrawEnabled ? 1 : 0); }
     if (adminPassword !== undefined && adminPassword.trim() !== '') { updates.push('adminPassword = ?'); params.push(adminPassword); }
     if (dataClaimReferralsRequired !== undefined) { updates.push('dataClaimReferralsRequired = ?'); params.push(dataClaimReferralsRequired); }
     if (popupMessage !== undefined) { updates.push('popupMessage = ?'); params.push(popupMessage); }
-    if (welcomeMessage !== undefined) { updates.push('welcomeMessage = ?'); params.push(welcomeMessage); }
-    if (emailVerificationEnabled !== undefined) { updates.push('emailVerificationEnabled = ?'); params.push(emailVerificationEnabled ? 1 : 0); }
-    if (smtpHost !== undefined) { updates.push('smtpHost = ?'); params.push(smtpHost); }
-    if (smtpPort !== undefined) { updates.push('smtpPort = ?'); params.push(smtpPort); }
-    if (smtpUser !== undefined) { updates.push('smtpUser = ?'); params.push(smtpUser); }
-    if (smtpPass !== undefined) { updates.push('smtpPass = ?'); params.push(smtpPass); }
-    if (autoPaymentEnabled !== undefined) { updates.push('autoPaymentEnabled = ?'); params.push(autoPaymentEnabled ? 1 : 0); }
-    if (gatewaySecretKey !== undefined) { updates.push('gatewaySecretKey = ?'); params.push(gatewaySecretKey); }
     if (welcomeMessage !== undefined) { updates.push('welcomeMessage = ?'); params.push(welcomeMessage); }
     if (emailVerificationEnabled !== undefined) { updates.push('emailVerificationEnabled = ?'); params.push(emailVerificationEnabled ? 1 : 0); }
     if (smtpHost !== undefined) { updates.push('smtpHost = ?'); params.push(smtpHost); }
@@ -988,29 +995,31 @@ app.post('/api/withdrawals', (req, res) => {
             return res.status(400).json({ error: `Minimum withdrawal amount for this earnings type is ₦${minAmount}` });
         }
 
-        const now = new Date();
-        const currentDay = now.getDay().toString(); // 0-6
-        const currentTimeStr = now.toTimeString().substring(0, 5); // "HH:MM"
-        
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        
+        const parseDaysToNumbers = (daysStr) => {
+            const dayMap = {
+                'sunday': 0, 'sun': 0, '0': 0,
+                'monday': 1, 'mon': 1, '1': 1,
+                'tuesday': 2, 'tue': 2, '2': 2,
+                'wednesday': 3, 'wed': 3, '3': 3,
+                'thursday': 4, 'thu': 4, '4': 4,
+                'friday': 5, 'fri': 5, '5': 5,
+                'saturday': 6, 'sat': 6, '6': 6
+            };
+            return (daysStr || '').split(',').map(d => {
+                const clean = d.trim().toLowerCase();
+                return dayMap[clean] !== undefined ? dayMap[clean] : null;
+            }).filter(x => x !== null);
+        };
+
         if (type === 'referral' || type === 'referrals') {
-            const allowedDays = (settings.referralWithdrawDays || '').split(',').map(d => d.trim());
-            if (!allowedDays.includes(currentDay)) {
-                const allowedNames = allowedDays.map(d => dayNames[parseInt(d)]).join(', ');
-                return res.status(400).json({ error: `Referral withdrawals are only allowed on: ${allowedNames}.` });
-            }
-            if (currentTimeStr < (settings.referralWithdrawStartTime || '00:00') || currentTimeStr > (settings.referralWithdrawEndTime || '23:59')) {
-                return res.status(400).json({ error: `Referral withdrawals are only open between ${settings.referralWithdrawStartTime || '00:00'} and ${settings.referralWithdrawEndTime || '23:59'}.` });
+            const isEnabled = settings.referralWithdrawEnabled !== undefined ? settings.referralWithdrawEnabled : 1;
+            if (!isEnabled || isEnabled === 0 || isEnabled === '0' || isEnabled === false || isEnabled === 'false') {
+                return res.status(400).json({ error: 'Referral withdrawals are currently closed.' });
             }
         } else {
-            const allowedDays = (settings.activityWithdrawDays || '').split(',').map(d => d.trim());
-            if (!allowedDays.includes(currentDay)) {
-                const allowedNames = allowedDays.map(d => dayNames[parseInt(d)]).join(', ');
-                return res.status(400).json({ error: `Non-Referral withdrawals are only allowed on: ${allowedNames}.` });
-            }
-            if (currentTimeStr < (settings.activityWithdrawStartTime || '00:00') || currentTimeStr > (settings.activityWithdrawEndTime || '23:59')) {
-                return res.status(400).json({ error: `Non-Referral withdrawals are only open between ${settings.activityWithdrawStartTime || '00:00'} and ${settings.activityWithdrawEndTime || '23:59'}.` });
+            const isEnabled = settings.activityWithdrawEnabled !== undefined ? settings.activityWithdrawEnabled : 1;
+            if (!isEnabled || isEnabled === 0 || isEnabled === '0' || isEnabled === false || isEnabled === 'false') {
+                return res.status(400).json({ error: 'Activity withdrawals are currently closed.' });
             }
         }
 
@@ -1472,7 +1481,7 @@ app.get('/api/public/top-earners', (req, res) => {
         // Map the result so the frontend receives it correctly
         const formatted = rows.map(r => ({
             username: r.username,
-            totalReferralEarnings: r.totalEarned
+            totalReferralEarnings: r.totalEarned !== undefined ? r.totalEarned : (r.totalearned !== undefined ? r.totalearned : 0)
         }));
         res.status(200).json({ success: true, earners: formatted });
     });

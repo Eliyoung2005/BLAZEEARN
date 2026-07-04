@@ -192,6 +192,7 @@ async function sendVerificationCode() {
   --sidebar:240px;
   --bg:var(--dark);--surface:var(--card);--surface2:var(--card2);
   --line:var(--border);--fg:var(--text);--sub:var(--muted);
+  --nav-bg:rgba(8,8,8,0.9);
 }
 /* LIGHT MODE */
 body.light{
@@ -199,6 +200,7 @@ body.light{
   --border:#E2E8F0;--text:#111827;--muted:#64748B;
   --bg:var(--dark);--surface:var(--card);--surface2:var(--card2);
   --line:var(--border);--fg:var(--text);--sub:var(--muted);
+  --nav-bg:rgba(255,255,255,0.9);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--dark);color:var(--text);overflow-x:hidden;transition:background 0.3s,color 0.3s;}
@@ -206,11 +208,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--dark);color:var
 .page{display:none;min-height:100vh;}
 .page.active{display:block;}
 /* ===== LANDING NAV ===== */
-.land-nav{position:fixed;top:0;width:100%;z-index:100;padding:18px 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(8,8,8,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.land-nav{position:fixed;top:0;width:100%;z-index:100;padding:18px 48px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);transition:background 0.3s,border-color 0.3s;}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.08em;background:linear-gradient(90deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;}
 .nav-btns{display:flex;gap:10px;}
 .btn{padding:10px 24px;border-radius:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;border:none;transition:all 0.2s;letter-spacing:0.04em;text-transform:uppercase;}
-.btn-ghost{background:transparent;border:1px solid #333;color:var(--text);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);transition:background 0.3s,border-color 0.3s,color 0.3s;}
 .btn-ghost:hover{border-color:var(--fire);color:var(--fire);}
 .btn-blaze{background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;}
 .btn-blaze:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(255,69,0,0.45);}
@@ -829,6 +831,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
       <input type="text" id="reg-ref" placeholder="Referral username" style="text-transform:lowercase;">
     </div>
     <div class="fg"><label>Create Password</label><input type="password" id="reg-pass" placeholder="Minimum 6 characters"></div>
+    <div class="fg"><label>Confirm Password</label><input type="password" id="reg-confirm-pass" placeholder="Re-enter password"></div>
     <button class="btn btn-blaze btn-full" onclick="handleRegister()">Activate My Account</button>
     <div class="auth-foot">Already have an account? <a href=javascript:void(0) onclick="showPage('login')">Login here</a></div>
   </div>
@@ -1048,19 +1051,15 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
       <!-- STEP 1: CHOOSE TYPE -->
       <div id="wd-choose" style="display:block;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;max-width:600px;">
-          <div onclick="openWdForm('activity')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--fire)';this.style.background='rgba(255,69,0,0.05)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">
-            
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;margin-bottom:6px;">Activity Earnings</div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Paid on the <strong style="color:var(--gold);">15th of every month</strong></div>
+          <div id="wd-act-card" onclick="openWdForm('activity')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--fire)';this.style.background='rgba(255,69,0,0.05)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;margin-bottom:16px;">Activity Earnings</div>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;background:linear-gradient(90deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;" id="wd-act-bal-card">N0.00</div>
-            <div style="margin-top:16px;background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;font-size:0.78rem;padding:10px 20px;border-radius:7px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;">Select This →</div>
+            <div id="wd-act-btn" style="margin-top:16px;background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;font-size:0.78rem;padding:10px 20px;border-radius:7px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;">Select This →</div>
           </div>
-          <div onclick="openWdForm('referral')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--green)';this.style.background='rgba(0,255,136,0.04)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">
-            
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;margin-bottom:6px;">Referral Earnings</div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Withdraw <strong style="color:var(--green);">anytime</strong> — Min. N300</div>
+          <div id="wd-ref-card" onclick="openWdForm('referral')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--green)';this.style.background='rgba(0,255,136,0.04)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;margin-bottom:16px;">Referral Earnings</div>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;background:linear-gradient(90deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;" id="wd-ref-bal-card">N0.00</div>
-            <div style="margin-top:16px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-weight:700;font-size:0.78rem;padding:10px 20px;border-radius:7px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;">Select This →</div>
+            <div id="wd-ref-btn" style="margin-top:16px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-weight:700;font-size:0.78rem;padding:10px 20px;border-radius:7px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;">Select This →</div>
           </div>
         </div>
 
@@ -1213,7 +1212,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
           <div id="ph-name-vendor-area" style="font-weight:700;font-size:0.9rem;">Loading...</div>
           <div id="ph-uname-vendor-area" style="font-size:0.72rem;color:var(--muted);">@username</div>
         </div>
-        <button onclick="toggleTheme()" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:7px;cursor:pointer;font-size:0.9rem;" title="Toggle theme">🌙</button>
+        <button onclick="toggleTheme()" id="theme-btn-vendor" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:7px;cursor:pointer;font-size:0.9rem;" title="Toggle theme">🌙</button>
       </div>
       <div class="pane-title">VENDOR DASHBOARD</div>
       <div class="pane-sub">Monitor your generated coupon codes and track usage.</div>
@@ -1499,8 +1498,8 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
 
     <!-- DATA CLAIM DATE -->
     <div class="panel" id="apanel-dataadmin">
-      <div class="pane-title">DATA CLAIM DATE</div>
-      <div class="pane-sub">Set the date when users can claim their 3GB data reward. All users will see this date on their dashboard.</div>
+      <div class="pane-title">DATA CLAIM DATE & SETTINGS</div>
+      <div class="pane-sub">Set the data claim date and configure minimum referrals required for data claims.</div>
       <div class="a-form">
         <h4>Set 3GB Data Claim Date</h4>
         <div class="a-form-row">
@@ -1508,6 +1507,13 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
           <div class="fg" style="margin-bottom:0;align-self:end;"><button class="btn btn-blaze" onclick="setClaimDate()" style="width:100%;">Set Claim Date</button></div>
         </div>
         <div id="current-claim-date" style="margin-top:14px;font-size:0.85rem;color:var(--muted);"></div>
+      </div>
+      <div class="a-form" style="margin-top:20px;">
+        <h4>Set Minimum Referrals Required for Data Claim</h4>
+        <div class="a-form-row">
+          <div class="fg" style="margin-bottom:0;"><label>Minimum Referrals</label><input type="number" id="claim-refs-input" placeholder="e.g. 20" min="0"></div>
+          <div class="fg" style="margin-bottom:0;align-self:end;"><button class="btn btn-blaze" onclick="saveDataClaimRefsSetting()" style="width:100%;">Save Setting</button></div>
+        </div>
       </div>
       <div class="tbox">
         <div class="tbox-head"><h4>Users Data Claim Info — Numbers and Networks</h4></div>
@@ -1688,47 +1694,30 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
             <button style="background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.8rem;padding:10px 20px;border-radius:7px;border:none;cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;width:100%;" onclick="saveMinWd('referral')">Update Referral Minimum</button>
           </div>
         </div>
-          <!-- Advanced Withdrawal Times & Dates -->
+          <!-- Withdrawal Status Toggles -->
           <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin-bottom:14px;color:var(--gold);">WITHDRAWAL WINDOWS & DATES</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin-bottom:14px;color:var(--gold);">WITHDRAWAL STATUS CONTROL</div>
+            <div id="admin-lagos-clock" style="font-size:0.85rem;color:var(--green);font-weight:700;margin-top:-8px;margin-bottom:14px;letter-spacing:0.5px;">Current Time (Lagos): Loading...</div>
+            <div style="display:flex;flex-direction:column;gap:16px;max-width:500px;">
               
-              <!-- Activity Config -->
-              <div style="padding-right:15px; border-right:1px solid var(--border);">
-                <div style="font-weight:700;margin-bottom:10px;text-transform:uppercase;font-size:0.8rem;color:var(--muted);">Activity Earnings</div>
-                <div class="fg">
-                  <label>Allowed Dates (comma separated, e.g. 15,28)</label>
-                  <input type="text" id="setting-act-dates" placeholder="Leave blank to allow any day">
+              <div style="display:flex;align-items:center;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;">
+                <div>
+                  <div style="font-weight:700;font-size:0.9rem;color:var(--text);">Activity Earnings Withdrawals</div>
+                  <div style="font-size:0.75rem;color:var(--muted);">Enable or disable activity withdrawals instantly</div>
                 </div>
-                <div class="fg">
-                  <label>Allowed Days of Week (e.g. Sunday,Tuesday)</label>
-                  <input type="text" id="setting-act-days" placeholder="Leave blank to allow any day of week">
-                </div>
-                <div class="fg" style="display:flex;gap:10px;">
-                  <div style="flex:1;"><label>Start Time</label><input type="time" id="setting-act-start"></div>
-                  <div style="flex:1;"><label>End Time</label><input type="time" id="setting-act-end"></div>
-                </div>
+                <input type="checkbox" id="setting-act-enabled" style="transform:scale(1.3);cursor:pointer;margin-left:auto;">
               </div>
-
-              <!-- Referral Config -->
-              <div>
-                <div style="font-weight:700;margin-bottom:10px;text-transform:uppercase;font-size:0.8rem;color:var(--muted);">Referral Earnings</div>
-                <div class="fg">
-                  <label>Allowed Dates (comma separated, e.g. 15,28)</label>
-                  <input type="text" id="setting-ref-dates" placeholder="Leave blank to allow any day">
+              
+              <div style="display:flex;align-items:center;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;">
+                <div>
+                  <div style="font-weight:700;font-size:0.9rem;color:var(--text);">Referral Earnings Withdrawals</div>
+                  <div style="font-size:0.75rem;color:var(--muted);">Enable or disable referral withdrawals instantly</div>
                 </div>
-                <div class="fg">
-                  <label>Allowed Days of Week (e.g. Sunday,Tuesday)</label>
-                  <input type="text" id="setting-ref-days" placeholder="Leave blank to allow any day of week">
-                </div>
-                <div class="fg" style="display:flex;gap:10px;">
-                  <div style="flex:1;"><label>Start Time</label><input type="time" id="setting-ref-start"></div>
-                  <div style="flex:1;"><label>End Time</label><input type="time" id="setting-ref-end"></div>
-                </div>
+                <input type="checkbox" id="setting-ref-enabled" style="transform:scale(1.3);cursor:pointer;margin-left:auto;">
               </div>
+              
             </div>
-            
-            <button style="margin-top:15px;background:var(--card);border:1px solid var(--border);color:var(--text);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.88rem;padding:12px 26px;border-radius:8px;cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;" onmouseover="this.style.borderColor='var(--fire)'" onmouseout="this.style.borderColor='var(--border)'" onclick="saveAdvancedSettings()">Update Withdrawal Rules</button>
+            <button style="margin-top:15px;background:var(--card);border:1px solid var(--border);color:var(--text);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.88rem;padding:12px 26px;border-radius:8px;cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;" onmouseover="this.style.borderColor='var(--fire)'" onmouseout="this.style.borderColor='var(--border)'" onclick="saveAdvancedSettings()">Update Withdrawal Settings</button>
           </div>
 
 
@@ -2017,6 +2006,7 @@ async function handleRegister() {
     var e = document.getElementById('reg-email').value.trim();
     var c = document.getElementById('reg-coupon').value.trim();
     var pw = document.getElementById('reg-pass').value.trim();
+    var cpw = document.getElementById('reg-confirm-pass') ? document.getElementById('reg-confirm-pass').value.trim() : '';
     var ref = document.getElementById('reg-ref').value.trim() || undefined;
     var vcode = document.getElementById('reg-verification-code') ? document.getElementById('reg-verification-code').value.trim() : '';
   
@@ -2027,6 +2017,8 @@ async function handleRegister() {
     if(!e) { showToast('Email Address is required', '#FFAA00'); return; }
     if(!c) { showToast('Coupon Code is required', '#FFAA00'); return; }
     if(!pw) { showToast('Password is required', '#FFAA00'); return; }
+    if(!cpw) { showToast('Please confirm your password', '#FFAA00'); return; }
+    if(pw !== cpw) { showToast('Passwords do not match', '#FFAA00'); return; }
     if(appSettings && appSettings.emailVerificationEnabled && !vcode) { showToast('Email verification code is required', '#FFAA00'); return; }
 
     
@@ -2129,6 +2121,12 @@ window.addEventListener('DOMContentLoaded', async function(){
 var currentUser = null;
 var userToken = localStorage.getItem('blaze_token') || null;
 var adminToken = localStorage.getItem('blaze_admin_token') || null;
+var users = [];
+var coupons = [];
+var vendors = [];
+var withdrawals = [];
+var claims = [];
+var tasks = [];
 
 // API helper function
 async function api(method, endpoint, data=null, isAdmin=false) {
@@ -2205,6 +2203,10 @@ function showPage(pageId) {
   }
 
   function showPanel(panelId, el) {
+    if(panelId === 'withdraw') {
+        if(typeof fetchUser === 'function') fetchUser();
+        if(typeof refreshWithdrawalTables === 'function') refreshWithdrawalTables();
+    }
     if(panelId === 'referral' && typeof loadUserReferrals === 'function') loadUserReferrals();
     if(panelId === 'earners' && typeof loadDashboardTopEarners === 'function') loadDashboardTopEarners();
     if(panelId === 'tasks' && typeof loadUserTasks === 'function') loadUserTasks();
@@ -2298,8 +2300,11 @@ async function completeTask(idx, btn){
   try {
     var res = await api('POST','/api/tasks/'+task.id+'/complete');
     task.completedBy=[currentUser.username];
-    actBalance=res.new_activity_balance||actBalance+task.reward;
-    balance=res.new_total_balance||balance+task.reward;
+    var newAct = res.new_activity_balance !== undefined ? res.new_activity_balance : ((currentUser.activity_balance || 0) + task.reward);
+    var newTotal = res.new_total_balance !== undefined ? res.new_total_balance : ((currentUser.total_balance || 0) + task.reward);
+    currentUser.activity_balance = newAct;
+    currentUser.total_balance = newTotal;
+    localStorage.setItem('blaze_user', JSON.stringify(currentUser));
     updateBalanceDisplay();
     btn.textContent='✅ Completed';
     btn.className='btn-done completed';
@@ -2363,7 +2368,12 @@ function fallbackCopy(text) {
 
 // ===== WITHDRAWAL =====
 function openWdForm(type){
-  var actBal=actBalance, refBal=refBalance;
+  if(!isWithdrawalOpen(type)) {
+    showToast('Withdrawal is currently closed.', '#FF3B3B');
+    return;
+  }
+  var actBal = currentUser ? (currentUser.activity_balance || 0) : 0;
+  var refBal = currentUser ? (currentUser.referral_balance || 0) : 0;
   document.getElementById('wd-choose').style.display='none';
   document.getElementById('wd-form').style.display='block';
   document.getElementById('wd-current-type').value=type;
@@ -2375,14 +2385,10 @@ function openWdForm(type){
     document.getElementById('wd-form-title').textContent='ACTIVITY WITHDRAWAL';
     document.getElementById('wd-avail-bal').textContent='N'+actBal.toLocaleString()+'.00';
     document.getElementById('wd-type-label').textContent='Activity Earnings';
-    document.getElementById('wd-form-notice').innerHTML='<span style="font-size:1.2rem;flex-shrink:0;">📅</span><div><strong>Activity withdrawals</strong> are paid on the <strong style="color:var(--gold);">15th of every month</strong>. Minimum withdrawal is <strong style="color:var(--gold);">N'+minActWd+'</strong>.</div>';
-    document.getElementById('wd-form-notice').style.cssText='border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:flex-start;gap:12px;font-size:0.83rem;background:rgba(255,170,0,0.06);border:1px solid rgba(255,170,0,0.2);color:var(--text);';
   } else {
     document.getElementById('wd-form-title').textContent='REFERRAL WITHDRAWAL';
     document.getElementById('wd-avail-bal').textContent='N'+refBal.toLocaleString()+'.00';
     document.getElementById('wd-type-label').textContent='Referral Earnings';
-    document.getElementById('wd-form-notice').innerHTML='<span style="font-size:1.2rem;flex-shrink:0;">💰</span><div><strong>Referral withdrawals</strong> are processed anytime. Minimum withdrawal is <strong style="color:var(--green);">N'+minRefWd+'</strong>. Allow 24–48 hours for processing.</div>';
-    document.getElementById('wd-form-notice').style.cssText='border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:flex-start;gap:12px;font-size:0.83rem;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);color:var(--text);';
   }
 }
 
@@ -2409,6 +2415,7 @@ async function submitWithdrawal(){
     // Update local currentUser balances directly so the UI responds immediately
     if(type==='activity'){currentUser.activity_balance-=amount;}else{currentUser.referral_balance-=amount;}
     currentUser.total_balance-=amount;
+    localStorage.setItem('blaze_user', JSON.stringify(currentUser));
     updateBalanceDisplay();
     refreshWithdrawalTables();
     closeWdForm();
@@ -2450,6 +2457,7 @@ async function refreshWithdrawalTables(){
       if(aActTbody)aActTbody.innerHTML=actWds.length?wdHtml(actWds,true):'<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:22px;">No activity withdrawals yet.</td></tr>';
       if(aRefTbody)aRefTbody.innerHTML=refWds.length?wdHtml(refWds,true):'<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:22px;">No referral withdrawals yet.</td></tr>';
     }
+    if (isAdminPage && typeof updateAdminStats === 'function') updateAdminStats();
   } catch(err) {
     console.error("Withdrawal error:", err);
   }
@@ -2717,6 +2725,22 @@ function setClaimDate(){
   document.getElementById('current-claim-date').textContent='Claim date set to: '+formatted;
   updateDataStatus();
   showToast('Claim date set to '+formatted,'#00FF88');
+}
+
+async function saveDataClaimRefsSetting() {
+  var val = parseInt(document.getElementById('claim-refs-input').value);
+  if (isNaN(val) || val < 0) {
+      showToast('Please enter a valid non-negative number', '#FFAA00');
+      return;
+  }
+  showToast('Saving referrals requirement...', '#4488FF');
+  try {
+      await api('PUT', '/api/admin/settings', { dataClaimReferralsRequired: val }, true);
+      showToast('Setting saved successfully!', '#00FF88');
+      loadSettings(); // Reload settings globally to update UI
+  } catch(err) {
+      showToast(err.message || 'Failed to save setting', '#FF3B3B');
+  }
 }
 
 // ===== DATA CLAIMS TABLE =====
@@ -3006,18 +3030,13 @@ function openWaApp(type) {
 
   async function saveAdvancedSettings() {
     var payload = {
-      activityWithdrawDates: document.getElementById('setting-act-dates').value.trim(),
-      activityWithdrawDays: document.getElementById('setting-act-days').value.trim(),
-      activityWithdrawStartTime: document.getElementById('setting-act-start').value,
-      activityWithdrawEndTime: document.getElementById('setting-act-end').value,
-      referralWithdrawDates: document.getElementById('setting-ref-dates').value.trim(),
-      referralWithdrawDays: document.getElementById('setting-ref-days').value.trim(),
-      referralWithdrawStartTime: document.getElementById('setting-ref-start').value,
-      referralWithdrawEndTime: document.getElementById('setting-ref-end').value
+      activityWithdrawEnabled: document.getElementById('setting-act-enabled').checked ? 1 : 0,
+      referralWithdrawEnabled: document.getElementById('setting-ref-enabled').checked ? 1 : 0
     };
     try {
       await api('PUT', '/api/admin/settings', payload, true);
-      showToast('Withdrawal rules updated!', '#00FF88');
+      showToast('Withdrawal settings updated!', '#00FF88');
+      if(typeof loadSettings === 'function') loadSettings();
     } catch(err) {
       showToast('Failed to update settings', '#FF3B3B');
     }
@@ -3030,12 +3049,21 @@ function updateAdminStats(){
     var u = typeof users !== 'undefined' ? users : [];
     var v = typeof vendors !== 'undefined' ? vendors : [];
     var w = typeof withdrawals !== 'undefined' ? withdrawals : [];
+    
+    var activeUsers = u.filter(function(usr) {
+        var bal = usr.totalBalance || usr.totalbalance || 0;
+        var actBal = usr.activityBalance || usr.activitybalance || 0;
+        var refBal = usr.referralBalance || usr.referralbalance || 0;
+        var refs = usr.direct_referrals || usr.directcount || 0;
+        return (bal > 700 || actBal > 0 || refBal > 0 || refs > 0);
+    });
+
     setEl('st-coupons',c.length);
     setEl('st-active',c.filter(function(x){return !x.isUsed && !x.isDeleted;}).length);
     setEl('st-used',c.filter(function(x){return x.isUsed && !x.isDeleted;}).length);
     setEl('st-deleted',c.filter(function(x){return x.isDeleted;}).length);
     setEl('st-users',u.length);
-    setEl('st-active-users',u.length); // Active and Total are identical initially
+    setEl('st-active-users',activeUsers.length);
     setEl('st-vendors',v.length);
     setEl('st-wds',w.filter(function(x){return x.status==='pending';}).length);
 }
@@ -3150,8 +3178,8 @@ function updateBalanceDisplay() {
     var tb = currentUser.total_balance || 0;
     var ab = currentUser.activity_balance || 0;
     var rb = currentUser.referral_balance || 0;
-    var dr = currentUser.direct_referrals || 0;
-    var ir = currentUser.indirect_referrals || 0;
+    var dr = parseInt(currentUser.direct_referrals, 10) || 0;
+    var ir = parseInt(currentUser.indirect_referrals, 10) || 0;
     var totalRefs = dr + ir;
     var refTotalEarned = (dr * 500) + (ir * 50);
 
@@ -3173,7 +3201,57 @@ function updateBalanceDisplay() {
     // Withdraw tab updates
     var wdAct = document.getElementById('wd-act-bal-card'); if(wdAct) wdAct.textContent = 'N' + ab.toLocaleString() + '.00';
     var wdRef = document.getElementById('wd-ref-bal-card'); if(wdRef) wdRef.textContent = 'N' + rb.toLocaleString() + '.00';
+    if (typeof updateWithdrawalCardsUI === 'function') updateWithdrawalCardsUI();
 } 
+
+function isWithdrawalOpen(type) {
+    if (!appSettings) return false;
+    if (type === 'referral') {
+        var enabled = appSettings.referralWithdrawEnabled !== undefined ? appSettings.referralWithdrawEnabled : 1;
+        return (enabled == 1 || enabled === true);
+    } else {
+        var enabled = appSettings.activityWithdrawEnabled !== undefined ? appSettings.activityWithdrawEnabled : 1;
+        return (enabled == 1 || enabled === true);
+    }
+}
+
+function updateWithdrawalCardsUI() {
+  var actOpen = isWithdrawalOpen('activity');
+  var actCard = document.getElementById('wd-act-card');
+  var actBtn = document.getElementById('wd-act-btn');
+  if(actCard && actBtn) {
+    if(actOpen) {
+      actCard.style.opacity = '1';
+      actBtn.textContent = 'Select This →';
+      actBtn.style.background = 'linear-gradient(135deg,var(--fire),var(--gold))';
+      actBtn.style.color = '#000';
+    } else {
+      actCard.style.opacity = '0.6';
+      actBtn.textContent = 'Withdrawal Closed';
+      actBtn.style.background = 'var(--border)';
+      actBtn.style.color = 'var(--muted)';
+    }
+  }
+
+  var refOpen = isWithdrawalOpen('referral');
+  var refCard = document.getElementById('wd-ref-card');
+  var refBtn = document.getElementById('wd-ref-btn');
+  if(refCard && refBtn) {
+    if(refOpen) {
+      refCard.style.opacity = '1';
+      refBtn.textContent = 'Select This →';
+      refBtn.style.background = 'rgba(0,255,136,0.1)';
+      refBtn.style.color = 'var(--green)';
+      refBtn.style.border = '1px solid rgba(0,255,136,0.3)';
+    } else {
+      refCard.style.opacity = '0.6';
+      refBtn.textContent = 'Withdrawal Closed';
+      refBtn.style.background = 'var(--border)';
+      refBtn.style.color = 'var(--muted)';
+      refBtn.style.border = 'none';
+    }
+  }
+}
 
 async function loadVendorDashboard() {
     try {
@@ -3296,10 +3374,12 @@ function initTheme() {
     isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
   document.body.classList.toggle('light', !isDark);
-  var icon = isDark ? '🌙' : '☀️';
-  ['theme-btn','theme-btn-dash','theme-btn-home','theme-btn-tasks','theme-btn-data','theme-btn-withdraw','theme-btn-referral','theme-btn-profile'].forEach(function(id){
+  var icon = isDark 
+    ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-svg" style="width:1.2rem;height:1.2rem;vertical-align:middle;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>` 
+    : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-svg" style="width:1.2rem;height:1.2rem;vertical-align:middle;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+  ['theme-btn','theme-btn-dash','theme-btn-home','theme-btn-tasks','theme-btn-data','theme-btn-withdraw','theme-btn-referral','theme-btn-earners','theme-btn-vendor','theme-btn-profile'].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.textContent = icon;
+    if(el) el.innerHTML = icon;
   });
 }
 
@@ -3325,6 +3405,10 @@ async function loadSettings() {
                 el.innerText = 'You need ' + reqRefs + ' direct referrals per claim.';
             });
             
+            if (document.getElementById('claim-refs-input')) {
+                document.getElementById('claim-refs-input').value = reqRefs;
+            }
+            
             // Populate admin field if it exists
             const popupInput = document.getElementById('setting-popup-msg');
             
@@ -3333,6 +3417,13 @@ async function loadSettings() {
             if (document.getElementById('set-smtp-port')) document.getElementById('set-smtp-port').value = appSettings.smtpPort || '';
             if (document.getElementById('set-smtp-user')) document.getElementById('set-smtp-user').value = appSettings.smtpUser || '';
             if (document.getElementById('set-smtp-pass')) document.getElementById('set-smtp-pass').value = appSettings.smtpPass || '';
+
+            if (document.getElementById('setting-act-enabled')) {
+                document.getElementById('setting-act-enabled').checked = appSettings.activityWithdrawEnabled !== undefined ? (appSettings.activityWithdrawEnabled == 1 || appSettings.activityWithdrawEnabled === true) : true;
+            }
+            if (document.getElementById('setting-ref-enabled')) {
+                document.getElementById('setting-ref-enabled').checked = appSettings.referralWithdrawEnabled !== undefined ? (appSettings.referralWithdrawEnabled == 1 || appSettings.referralWithdrawEnabled === true) : true;
+            }
 
             const popupEnable = document.getElementById('setting-popup-enable');
             if (popupInput && appSettings.popupMessage !== undefined) {
@@ -3531,6 +3622,22 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     wrapper.appendChild(btn);
   });
+
+  // Background Auto-Refresh (Every 10 seconds) to sync admin/user dashboards in real-time
+  setInterval(function() {
+    if (typeof adminToken !== 'undefined' && adminToken) {
+      if (typeof refreshWithdrawalTables === 'function') refreshWithdrawalTables();
+      if (typeof refreshUsersTable === 'function') refreshUsersTable();
+      if (typeof refreshCouponsTable === 'function') refreshCouponsTable();
+    } else if (typeof userToken !== 'undefined' && userToken) {
+      if (typeof fetchUser === 'function') fetchUser();
+      // Only refresh user withdrawal table if the user is currently viewing the withdraw panel
+      var activePanel = document.querySelector('.panel.active');
+      if (activePanel && activePanel.id === 'panel-withdraw' && typeof refreshWithdrawalTables === 'function') {
+        refreshWithdrawalTables();
+      }
+    }
+  }, 10000);
 });
 
 // ===== TOAST =====

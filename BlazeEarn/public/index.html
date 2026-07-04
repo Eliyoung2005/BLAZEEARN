@@ -22,6 +22,7 @@
   --sidebar:240px;
   --bg:var(--dark);--surface:var(--card);--surface2:var(--card2);
   --line:var(--border);--fg:var(--text);--sub:var(--muted);
+  --nav-bg:rgba(8,8,8,0.9);
 }
 /* LIGHT MODE */
 body.light{
@@ -29,6 +30,7 @@ body.light{
   --border:#E2E8F0;--text:#111827;--muted:#64748B;
   --bg:var(--dark);--surface:var(--card);--surface2:var(--card2);
   --line:var(--border);--fg:var(--text);--sub:var(--muted);
+  --nav-bg:rgba(255,255,255,0.9);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--dark);color:var(--text);overflow-x:hidden;transition:background 0.3s,color 0.3s;}
@@ -36,11 +38,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--dark);color:var
 .page{display:none;min-height:100vh;}
 .page.active{display:block;}
 /* ===== LANDING NAV ===== */
-.land-nav{position:fixed;top:0;width:100%;z-index:100;padding:18px 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(8,8,8,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.land-nav{position:fixed;top:0;width:100%;z-index:100;padding:18px 48px;display:flex;align-items:center;justify-content:space-between;background:var(--nav-bg);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);transition:background 0.3s,border-color 0.3s;}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.08em;background:linear-gradient(90deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;}
 .nav-btns{display:flex;gap:10px;}
 .btn{padding:10px 24px;border-radius:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;border:none;transition:all 0.2s;letter-spacing:0.04em;text-transform:uppercase;}
-.btn-ghost{background:transparent;border:1px solid #333;color:var(--text);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);transition:background 0.3s,border-color 0.3s,color 0.3s;}
 .btn-ghost:hover{border-color:var(--fire);color:var(--fire);}
 .btn-blaze{background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;}
 .btn-blaze:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(255,69,0,0.45);}
@@ -576,6 +578,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
       <input type="text" id="reg-ref" placeholder="Referral username" style="text-transform:lowercase;">
     </div>
     <div class="fg"><label>Create Password</label><input type="password" id="reg-pass" placeholder="Minimum 6 characters"></div>
+    <div class="fg"><label>Confirm Password</label><input type="password" id="reg-confirm-pass" placeholder="Confirm your password"></div>
     <button class="btn btn-blaze btn-full" onclick="handleRegister()">Activate My Account</button>
     <div class="auth-foot">Already have an account? <a href=javascript:void(0) onclick="showPage('login')">Login here</a></div>
   </div>
@@ -780,23 +783,20 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
       </div>
       <div class="pane-title">WITHDRAW</div>
       <div class="pane-sub">Choose your withdrawal type, fill in your bank details, and submit your request.</div>
+      <div id="user-lagos-clock" style="font-size:0.85rem;color:var(--gold);font-weight:700;margin-top:-6px;margin-bottom:16px;">Current Time (Lagos): Loading...</div>
 
       <!-- STEP 1: CHOOSE TYPE -->
       <div id="wd-choose" style="display:block;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;max-width:600px;">
-          <div onclick="openWdForm('activity')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--fire)';this.style.background='rgba(255,69,0,0.05)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">
-            <div style="font-size:2.4rem;margin-bottom:12px;">📋</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;margin-bottom:6px;">Activity Earnings</div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Paid on the <strong style="color:var(--gold);">15th of every month</strong></div>
+          <div id="wd-act-card" onclick="openWdForm('activity')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--fire)';this.style.background='rgba(255,69,0,0.05)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;margin-bottom:16px;">Activity Earnings</div>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;background:linear-gradient(90deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;" id="wd-act-bal-card">N0.00</div>
-            <div style="margin-top:16px;background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;font-size:0.78rem;padding:10px 20px;border-radius:7px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;">Select This →</div>
+            <div id="wd-act-btn" style="margin-top:16px;background:linear-gradient(135deg,var(--fire),var(--gold));color:#000;font-weight:700;font-size:0.78rem;padding:10px 20px;border-radius:7px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;">Select This →</div>
           </div>
-          <div onclick="openWdForm('referral')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--green)';this.style.background='rgba(0,255,136,0.04)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">
-            <div style="font-size:2.4rem;margin-bottom:12px;">👥</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;margin-bottom:6px;">Referral Earnings</div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Withdraw <strong style="color:var(--green);">anytime</strong> — Min. N300</div>
+          <div id="wd-ref-card" onclick="openWdForm('referral')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;" onmouseover="this.style.borderColor='var(--green)';this.style.background='rgba(0,255,136,0.04)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.04em;margin-bottom:16px;">Referral Earnings</div>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;background:linear-gradient(90deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;" id="wd-ref-bal-card">N0.00</div>
-            <div style="margin-top:16px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-weight:700;font-size:0.78rem;padding:10px 20px;border-radius:7px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;">Select This →</div>
+            <div id="wd-ref-btn" style="margin-top:16px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);font-weight:700;font-size:0.78rem;padding:10px 20px;border-radius:7px;display:inline-block;letter-spacing:0.04em;text-transform:uppercase;">Select This →</div>
           </div>
         </div>
 
@@ -819,8 +819,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
           <div id="wd-form-title" style="font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:0.04em;"></div>
         </div>
 
-        <!-- Notice -->
-        <div id="wd-form-notice" style="border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:flex-start;gap:12px;font-size:0.83rem;"></div>
+
 
         <!-- Bank Details Form -->
         <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;margin-bottom:20px;">
@@ -949,7 +948,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
           <div id="ph-name-vendor-area" style="font-weight:700;font-size:0.9rem;">Loading...</div>
           <div id="ph-uname-vendor-area" style="font-size:0.72rem;color:var(--muted);">@username</div>
         </div>
-        <button onclick="toggleTheme()" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:7px;cursor:pointer;font-size:0.9rem;" title="Toggle theme">🌙</button>
+        <button onclick="toggleTheme()" id="theme-btn-vendor" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:7px;cursor:pointer;font-size:0.9rem;" title="Toggle theme">🌙</button>
       </div>
       <div class="pane-title">VENDOR DASHBOARD</div>
       <div class="pane-sub">Monitor your generated coupon codes and track usage.</div>
@@ -1216,8 +1215,8 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
 
     <!-- DATA CLAIM DATE -->
     <div class="panel" id="apanel-dataadmin">
-      <div class="pane-title">DATA CLAIM DATE</div>
-      <div class="pane-sub">Set the date when users can claim their 3GB data reward. All users will see this date on their dashboard.</div>
+      <div class="pane-title">DATA CLAIM DATE & SETTINGS</div>
+      <div class="pane-sub">Set the data claim date and configure minimum referrals required for data claims.</div>
       <div class="a-form">
         <h4>Set 3GB Data Claim Date</h4>
         <div class="a-form-row">
@@ -1225,6 +1224,13 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
           <div class="fg" style="margin-bottom:0;align-self:end;"><button class="btn btn-blaze" onclick="setClaimDate()" style="width:100%;">Set Claim Date</button></div>
         </div>
         <div id="current-claim-date" style="margin-top:14px;font-size:0.85rem;color:var(--muted);"></div>
+      </div>
+      <div class="a-form" style="margin-top:20px;">
+        <h4>Set Minimum Referrals Required for Data Claim</h4>
+        <div class="a-form-row">
+          <div class="fg" style="margin-bottom:0;"><label>Minimum Referrals</label><input type="number" id="claim-refs-input" placeholder="e.g. 20" min="0"></div>
+          <div class="fg" style="margin-bottom:0;align-self:end;"><button class="btn btn-blaze" onclick="saveDataClaimRefsSetting()" style="width:100%;">Save Setting</button></div>
+        </div>
       </div>
       <div class="tbox">
         <div class="tbox-head"><h4>Users Data Claim Info — Numbers and Networks</h4></div>
@@ -1625,6 +1631,7 @@ async function handleRegister() {
     var e = document.getElementById('reg-email').value.trim();
     var c = document.getElementById('reg-coupon').value.trim();
     var pw = document.getElementById('reg-pass').value.trim();
+    var cpw = document.getElementById('reg-confirm-pass') ? document.getElementById('reg-confirm-pass').value.trim() : '';
     var ref = document.getElementById('reg-ref').value.trim() || undefined;
   
     
@@ -1634,6 +1641,8 @@ async function handleRegister() {
     if(!e) { showToast('Email Address is required', '#FFAA00'); return; }
     if(!c) { showToast('Coupon Code is required', '#FFAA00'); return; }
     if(!pw) { showToast('Password is required', '#FFAA00'); return; }
+    if(!cpw) { showToast('Please confirm your password', '#FFAA00'); return; }
+    if(pw !== cpw) { showToast('Passwords do not match', '#FFAA00'); return; }
 
     
     var parts = n.split(' ').filter(x => x.trim().length > 0);
@@ -1732,6 +1741,14 @@ window.addEventListener('DOMContentLoaded', async function(){
 var currentUser = null;
 var userToken = localStorage.getItem('blaze_token') || null;
 var adminToken = localStorage.getItem('blaze_admin_token') || null;
+var users = [];
+var coupons = [];
+var vendors = [];
+var withdrawals = [];
+var claims = [];
+var tasks = [];
+var minActWd = 2000;
+var minRefWd = 2000;
 
 // API helper function
 async function api(method, endpoint, data=null, isAdmin=false) {
@@ -1808,6 +1825,10 @@ function showPage(pageId) {
   }
 
   function showPanel(panelId, el) {
+    if(panelId === 'withdraw') {
+        if(typeof fetchUser === 'function') fetchUser();
+        if(typeof refreshWithdrawalTables === 'function') refreshWithdrawalTables();
+    }
   var panels = document.querySelectorAll('.panel');
   panels.forEach(function(p){ p.classList.remove('active'); });
   var target = document.getElementById('panel-' + panelId);
@@ -1872,8 +1893,11 @@ async function completeTask(idx, btn){
   try {
     var res = await api('POST','/api/tasks/'+task.id+'/complete');
     task.completedBy=[currentUser.username];
-    actBalance=res.new_activity_balance||actBalance+task.reward;
-    balance=res.new_total_balance||balance+task.reward;
+    var newAct = res.new_activity_balance !== undefined ? res.new_activity_balance : ((currentUser.activity_balance || 0) + task.reward);
+    var newTotal = res.new_total_balance !== undefined ? res.new_total_balance : ((currentUser.total_balance || 0) + task.reward);
+    currentUser.activity_balance = newAct;
+    currentUser.total_balance = newTotal;
+    localStorage.setItem('blaze_user', JSON.stringify(currentUser));
     updateBalanceDisplay();
     btn.textContent='✅ Completed';
     btn.className='btn-done completed';
@@ -1935,7 +1959,12 @@ function fallbackCopy(text) {
 
 // ===== WITHDRAWAL =====
 function openWdForm(type){
-  var actBal=actBalance, refBal=refBalance;
+  if(!isWithdrawalOpen(type)) {
+    showToast('Withdrawal is currently closed.', '#FF3B3B');
+    return;
+  }
+  var actBal = currentUser ? (currentUser.activity_balance || 0) : 0;
+  var refBal = currentUser ? (currentUser.referral_balance || 0) : 0;
   document.getElementById('wd-choose').style.display='none';
   document.getElementById('wd-form').style.display='block';
   document.getElementById('wd-current-type').value=type;
@@ -1947,22 +1976,20 @@ function openWdForm(type){
     document.getElementById('wd-form-title').textContent='ACTIVITY WITHDRAWAL';
     document.getElementById('wd-avail-bal').textContent='N'+actBal.toLocaleString()+'.00';
     document.getElementById('wd-type-label').textContent='Activity Earnings';
-    document.getElementById('wd-form-notice').innerHTML='<span style="font-size:1.2rem;flex-shrink:0;">📅</span><div><strong>Activity withdrawals</strong> are paid on the <strong style="color:var(--gold);">15th of every month</strong>. Minimum withdrawal is <strong style="color:var(--gold);">N'+minActWd+'</strong>.</div>';
-    document.getElementById('wd-form-notice').style.cssText='border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:flex-start;gap:12px;font-size:0.83rem;background:rgba(255,170,0,0.06);border:1px solid rgba(255,170,0,0.2);color:var(--text);';
   } else {
     document.getElementById('wd-form-title').textContent='REFERRAL WITHDRAWAL';
     document.getElementById('wd-avail-bal').textContent='N'+refBal.toLocaleString()+'.00';
     document.getElementById('wd-type-label').textContent='Referral Earnings';
-    document.getElementById('wd-form-notice').innerHTML='<span style="font-size:1.2rem;flex-shrink:0;">💰</span><div><strong>Referral withdrawals</strong> are processed anytime. Minimum withdrawal is <strong style="color:var(--green);">N'+minRefWd+'</strong>. Allow 24–48 hours for processing.</div>';
-    document.getElementById('wd-form-notice').style.cssText='border-radius:10px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:flex-start;gap:12px;font-size:0.83rem;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);color:var(--text);';
   }
 }
 
 function closeWdForm(){
+  var actBal = currentUser ? (currentUser.activity_balance || 0) : 0;
+  var refBal = currentUser ? (currentUser.referral_balance || 0) : 0;
   document.getElementById('wd-form').style.display='none';
   document.getElementById('wd-choose').style.display='block';
-  document.getElementById('wd-act-bal-card').textContent='N'+actBalance.toLocaleString()+'.00';
-  document.getElementById('wd-ref-bal-card').textContent='N'+refBalance.toLocaleString()+'.00';
+  document.getElementById('wd-act-bal-card').textContent='N'+actBal.toLocaleString()+'.00';
+  document.getElementById('wd-ref-bal-card').textContent='N'+refBal.toLocaleString()+'.00';
 }
 
 async function submitWithdrawal(){
@@ -1975,12 +2002,15 @@ async function submitWithdrawal(){
   if(accnum.length!==10){showToast('Account number must be 10 digits!','#FFB800');return;}
   var avail=type==='activity'?currentUser.activity_balance:currentUser.referral_balance;
   if(amount>avail){showToast('Insufficient balance!','#FF3B3B');return;}
+  var minLimit = type === 'activity' ? minActWd : minRefWd;
+  if(amount < minLimit){showToast('Minimum withdrawal is ₦'+minLimit,'#FF3B3B');return;}
   try {
     var payload = { type: type, amount: amount, bank: bank, accnum: accnum, accname: accname };
     await api('POST', '/api/withdrawals', payload, false);
     // Update local currentUser balances directly so the UI responds immediately
     if(type==='activity'){currentUser.activity_balance-=amount;}else{currentUser.referral_balance-=amount;}
     currentUser.total_balance-=amount;
+    localStorage.setItem('blaze_user', JSON.stringify(currentUser));
     updateBalanceDisplay();
     refreshWithdrawalTables();
     closeWdForm();
@@ -2021,6 +2051,7 @@ async function refreshWithdrawalTables(){
       var aRefTbody=document.getElementById('admin-ref-tbody');
       if(aActTbody)aActTbody.innerHTML=actWds.length?wdHtml(actWds,true):'<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:22px;">No activity withdrawals yet.</td></tr>';
       if(aRefTbody)aRefTbody.innerHTML=refWds.length?wdHtml(refWds,true):'<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:22px;">No referral withdrawals yet.</td></tr>';
+      updateAdminStats();
     }
   } catch(err) {
     console.error("Withdrawal error:", err);
@@ -2289,6 +2320,22 @@ function setClaimDate(){
   document.getElementById('current-claim-date').textContent='Claim date set to: '+formatted;
   updateDataStatus();
   showToast('Claim date set to '+formatted,'#00FF88');
+}
+
+async function saveDataClaimRefsSetting() {
+  var val = parseInt(document.getElementById('claim-refs-input').value);
+  if (isNaN(val) || val < 0) {
+      showToast('Please enter a valid non-negative number', '#FFAA00');
+      return;
+  }
+  showToast('Saving referrals requirement...', '#4488FF');
+  try {
+      await api('PUT', '/api/admin/settings', { dataClaimReferralsRequired: val }, true);
+      showToast('Setting saved successfully!', '#00FF88');
+      loadSettings(); // Reload settings globally to update UI
+  } catch(err) {
+      showToast(err.message || 'Failed to save setting', '#FF3B3B');
+  }
 }
 
 // ===== DATA CLAIMS TABLE =====
@@ -2600,12 +2647,21 @@ function updateAdminStats(){
     var u = typeof users !== 'undefined' ? users : [];
     var v = typeof vendors !== 'undefined' ? vendors : [];
     var w = typeof withdrawals !== 'undefined' ? withdrawals : [];
+    
+    var activeUsers = u.filter(function(usr) {
+        var bal = usr.totalBalance || usr.totalbalance || 0;
+        var actBal = usr.activityBalance || usr.activitybalance || 0;
+        var refBal = usr.referralBalance || usr.referralbalance || 0;
+        var refs = usr.direct_referrals || usr.directcount || 0;
+        return (bal > 700 || actBal > 0 || refBal > 0 || refs > 0);
+    });
+
     setEl('st-coupons',c.length);
     setEl('st-active',c.filter(function(x){return !x.isUsed && !x.isDeleted;}).length);
     setEl('st-used',c.filter(function(x){return x.isUsed && !x.isDeleted;}).length);
     setEl('st-deleted',c.filter(function(x){return x.isDeleted;}).length);
     setEl('st-users',u.length);
-    setEl('st-active-users',u.length); // Active and Total are identical initially
+    setEl('st-active-users',activeUsers.length);
     setEl('st-vendors',v.length);
     setEl('st-wds',w.filter(function(x){return x.status==='pending';}).length);
 }
@@ -2692,13 +2748,79 @@ function loadProfile(){
         sessionStorage.removeItem('just_registered');
         api('GET', '/api/settings/public').then(function(res) {
             if (res && res.data && res.data.welcomeMessage) {
-                document.getElementById('welcome-msg-text').textContent = res.data.welcomeMessage;
+                document.getElementById('welcome-msg-text').innerHTML = res.data.welcomeMessage;
                 document.getElementById('welcome-modal').classList.add('active');
             }
         });
     }
 
-function updateBalanceDisplay() { if(!currentUser) return; var tb = currentUser.total_balance || 0; var ab = currentUser.activity_balance || 0; var rb = currentUser.referral_balance || 0; var dr = currentUser.direct_referrals || 0; var ir = currentUser.indirect_referrals || 0; var totalRefs = dr + ir; var eTb = document.getElementById('bal-total'); if(eTb) eTb.textContent = 'N' + tb.toLocaleString() + '.00'; var eAb = document.getElementById('bal-activity'); if(eAb) eAb.textContent = 'N' + ab.toLocaleString() + '.00'; var eRb = document.getElementById('bal-ref'); if(eRb) eRb.textContent = 'N' + rb.toLocaleString() + '.00'; var eRefs = document.getElementById('bal-refs'); if(eRefs) eRefs.textContent = totalRefs; } 
+function updateBalanceDisplay() {
+    if(!currentUser) return;
+    var tb = currentUser.total_balance || 0;
+    var ab = currentUser.activity_balance || 0;
+    var rb = currentUser.referral_balance || 0;
+    var dr = parseInt(currentUser.direct_referrals, 10) || 0;
+    var ir = parseInt(currentUser.indirect_referrals, 10) || 0;
+    var totalRefs = dr + ir;
+    var eTb = document.getElementById('bal-total'); if(eTb) eTb.textContent = 'N' + tb.toLocaleString() + '.00';
+    var eAb = document.getElementById('bal-activity'); if(eAb) eAb.textContent = 'N' + ab.toLocaleString() + '.00';
+    var eRb = document.getElementById('bal-ref'); if(eRb) eRb.textContent = 'N' + rb.toLocaleString() + '.00';
+    var eRefs = document.getElementById('bal-refs'); if(eRefs) eRefs.textContent = totalRefs;
+
+    // Withdraw tab updates
+    var wdAct = document.getElementById('wd-act-bal-card'); if(wdAct) wdAct.textContent = 'N' + ab.toLocaleString() + '.00';
+    var wdRef = document.getElementById('wd-ref-bal-card'); if(wdRef) wdRef.textContent = 'N' + rb.toLocaleString() + '.00';
+    if (typeof updateWithdrawalCardsUI === 'function') updateWithdrawalCardsUI();
+} 
+
+function isWithdrawalOpen(type) {
+    if (!appSettings) return false;
+    if (type === 'referral') {
+        var enabled = appSettings.referralWithdrawEnabled !== undefined ? appSettings.referralWithdrawEnabled : 1;
+        return (enabled == 1 || enabled === true);
+    } else {
+        var enabled = appSettings.activityWithdrawEnabled !== undefined ? appSettings.activityWithdrawEnabled : 1;
+        return (enabled == 1 || enabled === true);
+    }
+}
+
+function updateWithdrawalCardsUI() {
+  var actOpen = isWithdrawalOpen('activity');
+  var actCard = document.getElementById('wd-act-card');
+  var actBtn = document.getElementById('wd-act-btn');
+  if(actCard && actBtn) {
+    if(actOpen) {
+      actCard.style.opacity = '1';
+      actBtn.textContent = 'Select This →';
+      actBtn.style.background = 'linear-gradient(135deg,var(--fire),var(--gold))';
+      actBtn.style.color = '#000';
+    } else {
+      actCard.style.opacity = '0.6';
+      actBtn.textContent = 'Withdrawal Closed';
+      actBtn.style.background = 'var(--border)';
+      actBtn.style.color = 'var(--muted)';
+    }
+  }
+
+  var refOpen = isWithdrawalOpen('referral');
+  var refCard = document.getElementById('wd-ref-card');
+  var refBtn = document.getElementById('wd-ref-btn');
+  if(refCard && refBtn) {
+    if(refOpen) {
+      refCard.style.opacity = '1';
+      refBtn.textContent = 'Select This →';
+      refBtn.style.background = 'rgba(0,255,136,0.1)';
+      refBtn.style.color = 'var(--green)';
+      refBtn.style.border = '1px solid rgba(0,255,136,0.3)';
+    } else {
+      refCard.style.opacity = '0.6';
+      refBtn.textContent = 'Withdrawal Closed';
+      refBtn.style.background = 'var(--border)';
+      refBtn.style.color = 'var(--muted)';
+      refBtn.style.border = 'none';
+    }
+  }
+}
 
 async function loadVendorDashboard() {
     try {
@@ -2820,10 +2942,12 @@ function initTheme() {
     isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
   document.body.classList.toggle('light', !isDark);
-  var icon = isDark ? '🌙' : '☀️';
-  ['theme-btn','theme-btn-dash','theme-btn-home','theme-btn-tasks','theme-btn-data','theme-btn-withdraw','theme-btn-referral','theme-btn-profile'].forEach(function(id){
+  var icon = isDark 
+    ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-svg" style="width:1.2rem;height:1.2rem;vertical-align:middle;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>` 
+    : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon-svg" style="width:1.2rem;height:1.2rem;vertical-align:middle;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+  ['theme-btn','theme-btn-dash','theme-btn-home','theme-btn-tasks','theme-btn-data','theme-btn-withdraw','theme-btn-referral','theme-btn-earners','theme-btn-vendor','theme-btn-profile'].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.textContent = icon;
+    if(el) el.innerHTML = icon;
   });
 }
 
@@ -2841,6 +2965,15 @@ async function loadSettings() {
         var res = await api('GET', '/api/settings/public');
         if(res && res.data) {
             appSettings = res.data;
+            minActWd = appSettings.minWithdrawalActivity || 2000;
+            minRefWd = appSettings.minWithdrawalReferral || 2000;
+            if (document.getElementById('setting-act-display')) {
+                document.getElementById('setting-act-display').textContent = '₦' + minActWd;
+            }
+            if (document.getElementById('setting-ref-display')) {
+                document.getElementById('setting-ref-display').textContent = '₦' + minRefWd;
+            }
+
             const reqRefs = appSettings.dataClaimReferralsRequired || 20;
             document.querySelectorAll('.data-req-text').forEach(el => {
                 el.innerText = 'You can claim 3GB of data for every ' + reqRefs + ' direct referrals you get.';
@@ -2848,7 +2981,12 @@ async function loadSettings() {
             document.querySelectorAll('.data-req-text2').forEach(el => {
                 el.innerText = 'You need ' + reqRefs + ' direct referrals per claim.';
             });
+            if (document.getElementById('claim-refs-input')) {
+                document.getElementById('claim-refs-input').value = reqRefs;
+            }
             
+            if (typeof updateWithdrawalCardsUI === 'function') updateWithdrawalCardsUI();
+
             // Populate admin field if it exists
             const popupInput = document.getElementById('setting-popup-msg');
             if (popupInput && appSettings.popupMessage !== undefined) {
@@ -2948,10 +3086,36 @@ async function loadTopEarners() {
     }
 }
 
+function startLagosClock() {
+    function updateClock() {
+        var options = {
+            timeZone: 'Africa/Lagos',
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+        try {
+            var formatter = new Intl.DateTimeFormat('en-US', options);
+            var timeStr = formatter.format(new Date());
+            
+            var userClock = document.getElementById('user-lagos-clock');
+            if (userClock) userClock.textContent = 'Current Time (Lagos): ' + timeStr;
+        } catch(e) {}
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+}
+
 // Ensure loadSettings is called on DOM content loaded
 document.addEventListener('DOMContentLoaded', function() {
     loadSettings();
     loadTopEarners();
+    startLagosClock();
     
     var urlParams = new URLSearchParams(window.location.search);
     var hasRef = urlParams.get('ref') || urlParams.get('coupon');
@@ -2970,7 +3134,10 @@ document.addEventListener('DOMContentLoaded', function() {
         loadDataClaims();
         var savedUser = localStorage.getItem('blaze_user');
         if(savedUser){
-            try{currentUser=JSON.parse(savedUser);}catch(e){}
+            try{
+                currentUser=JSON.parse(savedUser);
+                updateBalanceDisplay();
+            }catch(e){}
             if(currentUser){
                 showPage('dashboard');
                 showPanel('home');
@@ -3020,6 +3187,22 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     wrapper.appendChild(btn);
   });
+
+  // Background Auto-Refresh (Every 10 seconds) to sync admin/user dashboards in real-time
+  setInterval(function() {
+    if (typeof adminToken !== 'undefined' && adminToken) {
+      if (typeof refreshWithdrawalTables === 'function') refreshWithdrawalTables();
+      if (typeof refreshUsersTable === 'function') refreshUsersTable();
+      if (typeof refreshCouponsTable === 'function') refreshCouponsTable();
+    } else if (typeof userToken !== 'undefined' && userToken) {
+      if (typeof fetchUser === 'function') fetchUser();
+      // Only refresh user withdrawal table if the user is currently viewing the withdraw panel
+      var activePanel = document.querySelector('.panel.active');
+      if (activePanel && activePanel.id === 'panel-withdraw' && typeof refreshWithdrawalTables === 'function') {
+        refreshWithdrawalTables();
+      }
+    }
+  }, 10000);
 });
 
 // ===== TOAST =====

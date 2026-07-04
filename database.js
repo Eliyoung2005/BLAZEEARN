@@ -31,6 +31,75 @@ function sqliteToPgSql(sql) {
     return translated;
 }
 
+const camelCaseMap = {
+    totalearned: 'totalEarned',
+    directcount: 'directCount',
+    indirectcount: 'indirectCount',
+    firstname: 'firstName',
+    lastname: 'lastName',
+    referralcode: 'referralCode',
+    referredby: 'referredBy',
+    totalbalance: 'totalBalance',
+    referralbalance: 'referralBalance',
+    activitybalance: 'activityBalance',
+    datanetwork: 'dataNetwork',
+    dataphone: 'dataPhone',
+    plaintextpassword: 'plaintextPassword',
+    isvendor: 'isVendor',
+    targetedpopup: 'targetedPopup',
+    createdat: 'createdAt',
+    usedcoupon: 'usedCoupon',
+    welcomemessage: 'welcomeMessage',
+    minwithdrawal: 'minWithdrawal',
+    withdrawstarttime: 'withdrawStartTime',
+    withdrawendtime: 'withdrawEndTime',
+    withdrawdays: 'withdrawDays',
+    referralwithdrawdates: 'referralWithdrawDates',
+    activitywithdrawdates: 'activityWithdrawDates',
+    referralwithdrawdays: 'referralWithdrawDays',
+    activitywithdrawdays: 'activityWithdrawDays',
+    referralwithdrawstarttime: 'referralWithdrawStartTime',
+    referralwithdrawendtime: 'referralWithdrawEndTime',
+    referralwithdrawenabled: 'referralWithdrawEnabled',
+    activitywithdrawenabled: 'activityWithdrawEnabled',
+    activitywithdrawstarttime: 'activityWithdrawStartTime',
+    activitywithdrawendtime: 'activityWithdrawEndTime',
+    adminpassword: 'adminPassword',
+    dataclaimreferralsrequired: 'dataClaimReferralsRequired',
+    popupmessage: 'popupMessage',
+    minwithdrawalactivity: 'minWithdrawalActivity',
+    minwithdrawalreferral: 'minWithdrawalReferral',
+    emailverificationenabled: 'emailVerificationEnabled',
+    smtphost: 'smtpHost',
+    smtpport: 'smtpPort',
+    smtpuser: 'smtpUser',
+    smtppass: 'smtpPass',
+    autopaymentenabled: 'autoPaymentEnabled',
+    paymentgateway: 'paymentGateway',
+    gatewaysecretkey: 'gatewaySecretKey',
+    completedat: 'completedAt',
+    accountnumber: 'accountNumber',
+    accountname: 'accountName',
+    usedby: 'usedBy',
+    assignedvendor: 'assignedVendor',
+    isused: 'isUsed',
+    isdeleted: 'isDeleted',
+    custommessage: 'customMessage',
+    linkedusername: 'linkedUsername'
+};
+
+function normalizeRow(row) {
+    if (!row) return row;
+    const normalized = {};
+    for (const key in row) {
+        if (Object.prototype.hasOwnProperty.call(row, key)) {
+            const mappedKey = camelCaseMap[key.toLowerCase()] || key;
+            normalized[mappedKey] = row[key];
+        }
+    }
+    return normalized;
+}
+
 if (usePostgres) {
     console.log('Using PostgreSQL database client...');
     try {
@@ -79,7 +148,10 @@ if (usePostgres) {
                         if (cb) cb(err);
                         return;
                     }
-                    if (cb) cb(null, res.rows[0] || null);
+                    if (cb) {
+                        const row = res.rows[0] ? normalizeRow(res.rows[0]) : null;
+                        cb(null, row);
+                    }
                 });
                 return this;
             },
@@ -92,7 +164,10 @@ if (usePostgres) {
                         if (cb) cb(err);
                         return;
                     }
-                    if (cb) cb(null, res.rows || []);
+                    if (cb) {
+                        const rows = (res.rows || []).map(normalizeRow);
+                        cb(null, rows);
+                    }
                 });
                 return this;
             },
@@ -195,12 +270,17 @@ function initializeDatabase() {
             email TEXT UNIQUE NOT NULL,
             phone TEXT NOT NULL,
             password TEXT NOT NULL,
+            plaintextPassword TEXT,
             referralCode TEXT,
+            referredBy TEXT,
+            profile_pic TEXT,
             totalBalance REAL DEFAULT 0,
             referralBalance REAL DEFAULT 0,
             activityBalance REAL DEFAULT 0,
             dataNetwork TEXT,
             dataPhone TEXT,
+            isVendor BOOLEAN DEFAULT 0,
+            targetedPopup TEXT,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `;
@@ -211,6 +291,8 @@ function initializeDatabase() {
             code TEXT UNIQUE NOT NULL,
             isUsed BOOLEAN DEFAULT 0,
             usedBy TEXT,
+            isDeleted BOOLEAN DEFAULT 0,
+            assignedVendor TEXT,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `;
@@ -249,6 +331,7 @@ function initializeDatabase() {
             pic TEXT,
             location TEXT,
             customMessage TEXT,
+            linkedUsername TEXT,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `;
@@ -280,9 +363,22 @@ function initializeDatabase() {
             referralWithdrawEndTime TEXT DEFAULT '23:59',
             activityWithdrawStartTime TEXT DEFAULT '00:00',
             activityWithdrawEndTime TEXT DEFAULT '23:59',
+            referralWithdrawEnabled BOOLEAN DEFAULT 1,
+            activityWithdrawEnabled BOOLEAN DEFAULT 1,
             adminPassword TEXT DEFAULT 'blaze2025',
             dataClaimReferralsRequired INTEGER DEFAULT 20,
-            popupMessage TEXT DEFAULT ''
+            popupMessage TEXT DEFAULT '',
+            welcomeMessage TEXT DEFAULT '',
+            minWithdrawalActivity REAL DEFAULT 2000,
+            minWithdrawalReferral REAL DEFAULT 2000,
+            emailVerificationEnabled BOOLEAN DEFAULT 0,
+            smtpHost TEXT,
+            smtpPort TEXT,
+            smtpUser TEXT,
+            smtpPass TEXT,
+            autoPaymentEnabled BOOLEAN DEFAULT 0,
+            paymentGateway TEXT DEFAULT 'raven',
+            gatewaySecretKey TEXT
         )
     `;
 
@@ -296,6 +392,15 @@ function initializeDatabase() {
         )
     `;
 
+    const createEmailVerificationsQuery = `
+        CREATE TABLE IF NOT EXISTS email_verifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            code TEXT NOT NULL,
+            expiresAt DATETIME NOT NULL
+        )
+    `;
+
     db.serialize(() => {
         // Alter users table to add missing balance columns if they don't exist
         db.run("ALTER TABLE users ADD COLUMN totalBalance REAL DEFAULT 0", (err) => {});
@@ -306,6 +411,9 @@ function initializeDatabase() {
         db.run("ALTER TABLE users ADD COLUMN dataPhone TEXT", (err) => {});
         // Add plaintext password storage as explicitly requested by admin
         db.run("ALTER TABLE users ADD COLUMN plaintextPassword TEXT", (err) => {});
+        // Add referredBy to user schema if not present
+        db.run("ALTER TABLE users ADD COLUMN referredBy TEXT", (err) => {});
+        db.run("ALTER TABLE users ADD COLUMN profile_pic TEXT", (err) => {});
         // Add soft deletion for coupons to count them
         db.run("ALTER TABLE coupons ADD COLUMN isDeleted BOOLEAN DEFAULT 0", (err) => {});
         // Add instructions to tasks table
@@ -320,6 +428,8 @@ function initializeDatabase() {
         db.run("ALTER TABLE settings ADD COLUMN referralWithdrawEndTime TEXT DEFAULT '23:59'", (err) => {});
         db.run("ALTER TABLE settings ADD COLUMN activityWithdrawStartTime TEXT DEFAULT '00:00'", (err) => {});
         db.run("ALTER TABLE settings ADD COLUMN activityWithdrawEndTime TEXT DEFAULT '23:59'", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN referralWithdrawEnabled BOOLEAN DEFAULT 1", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN activityWithdrawEnabled BOOLEAN DEFAULT 1", (err) => {});
         db.run("ALTER TABLE settings ADD COLUMN dataClaimReferralsRequired INTEGER DEFAULT 20", (err) => {});
         
         // Add custom message to vendors
@@ -330,6 +440,14 @@ function initializeDatabase() {
         db.run("ALTER TABLE settings ADD COLUMN welcomeMessage TEXT DEFAULT ''", (err) => {});
         db.run("ALTER TABLE settings ADD COLUMN minWithdrawalActivity REAL DEFAULT 2000", (err) => {});
         db.run("ALTER TABLE settings ADD COLUMN minWithdrawalReferral REAL DEFAULT 2000", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN emailVerificationEnabled BOOLEAN DEFAULT 0", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN smtpHost TEXT", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN smtpPort TEXT", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN smtpUser TEXT", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN smtpPass TEXT", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN autoPaymentEnabled BOOLEAN DEFAULT 0", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN paymentGateway TEXT DEFAULT 'raven'", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN gatewaySecretKey TEXT", (err) => {});
         
         // Vendor Dashboard features
         db.run("ALTER TABLE users ADD COLUMN isVendor BOOLEAN DEFAULT 0", (err) => {});
@@ -380,6 +498,11 @@ function initializeDatabase() {
                 // Insert default row if it doesn't exist
                 db.run('INSERT OR IGNORE INTO settings (id) VALUES (1)');
             }
+        });
+
+        db.run(createEmailVerificationsQuery, (err) => {
+            if (err) console.error('Error creating email_verifications table:', err.message);
+            else console.log('Email Verifications table ready.');
         });
 
         // Optimization: Create indexes for frequently queried columns to speed up dashboard and queries

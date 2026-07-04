@@ -27,6 +27,9 @@
     <button class="btn-blaze" onclick="doLogin()">Access Admin Panel</button>
   </div>
   <script>
+    if(localStorage.getItem('blaze_admin_token')){
+      window.location.href = '/staff-dashboard?v=' + Date.now();
+    }
     async function doLogin(){
       var u = document.getElementById('su').value.trim();
       var p = document.getElementById('sp').value.trim();
