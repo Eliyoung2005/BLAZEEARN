@@ -19,7 +19,9 @@
           "style1.css",
           "style2.css",
           "script.js",
-          "admin.js"
+          "admin.js",
+          "robots.txt",
+          "sitemap.xml"
         ]
       }
     }
