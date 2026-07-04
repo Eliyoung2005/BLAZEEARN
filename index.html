@@ -509,12 +509,13 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
 
 /* ===== TABLETS & PHONES (768px & below) ===== */
 @media(max-width:768px){
-  .sidebar {
+  .sidebar, .admin-sidebar {
     height: auto !important;
     max-height: 92vh !important;
     border-bottom-right-radius: 24px !important;
     border-bottom: 2px solid var(--border) !important;
     box-shadow: 5px 5px 30px rgba(0,0,0,0.6) !important;
+    overflow-y: auto !important;
   }
 
   /* --- Admin Mobile Fixes --- */
