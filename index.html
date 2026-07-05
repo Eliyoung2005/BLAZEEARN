@@ -2524,7 +2524,12 @@ async function refreshWithdrawalTables(){
     var wdHtml=function(list,isAdmin){
       return list.map(function(w){
         var tBadge = isAdmin ? '<td><span style="font-size:0.75rem;text-transform:uppercase;color:var(--muted);">'+w.type+'</span></td>' : '';
-        return '<tr><td style="color:var(--muted);">'+w.id+'</td>'+(isAdmin?'<td>@'+w.username+'</td>':'')+'<td>N'+w.amount.toLocaleString()+'</td><td>'+w.bank+'</td><td style="font-family:monospace;">'+w.accnum+'</td>'+(isAdmin?'<td>'+w.accname+'</td>':'')+'<td>'+w.date+'</td><td><span class="badge badge-'+w.status+'">'+w.status+'</span></td>'+tBadge+(isAdmin?'<td>'+(w.status==='pending'?'<button class="btn-approve" onclick="approveWd('+w.id+')">Approve</button>':'—')+'</td>':'')+'</tr>';
+        var warning = '';
+        if (isAdmin && w.type === 'activity') {
+          var hasRef = arr.some(function(other){ return other.username === w.username && other.type === 'referral'; });
+          if (hasRef) warning = '<br><span style="background:var(--fire);color:#fff;padding:2px 4px;border-radius:4px;font-size:0.6rem;font-weight:bold;margin-top:4px;display:inline-block;" title="This user also has Affiliate withdrawals">⚠️ AFF WITHDRAWN</span>';
+        }
+        return '<tr><td style="color:var(--muted);">'+w.id+'</td>'+(isAdmin?'<td>@'+w.username+warning+'</td>':'')+'<td>N'+w.amount.toLocaleString()+'</td><td>'+w.bank+'</td><td style="font-family:monospace;">'+w.accnum+'</td>'+(isAdmin?'<td>'+w.accname+'</td>':'')+'<td>'+w.date+'</td><td><span class="badge badge-'+w.status+'">'+w.status+'</span></td>'+tBadge+(isAdmin?'<td>'+(w.status==='pending'?'<button class="btn-approve" onclick="approveWd('+w.id+')">Approve</button>':'—')+'</td>':'')+'</tr>';
       }).join('');
     };
 
