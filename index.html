@@ -1336,8 +1336,21 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
       <!-- Withdrawal PIN -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:18px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.04em;margin-bottom:4px;">WITHDRAWAL PIN</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px;">Your 4-digit security PIN is set during registration.</div>
-        <button style="background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.3);color:var(--gold);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.86rem;padding:12px 28px;border-radius:8px;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;" onclick="forgotWithdrawalPin()">Forgot PIN?</button>
+        
+        <!-- For Old Users without PIN -->
+        <div id="profile-pin-setup" style="display:none;">
+          <div style="font-size:0.8rem;color:var(--gold);margin-bottom:20px;font-weight:600;">You need to set an initial 4-digit security PIN before you can withdraw. This can only be done once.</div>
+          <div style="display:grid;grid-template-columns:1fr;gap:14px;max-width:300px;">
+            <div class="fg" style="margin-bottom:0;"><label>Set Initial PIN</label><input type="password" id="profile-withdraw-pin" placeholder="Enter 4-digit PIN" maxlength="4" pattern="\d{4}" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+          </div>
+          <button style="margin-top:20px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.86rem;padding:12px 28px;border-radius:8px;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;" onclick="setInitialWithdrawalPin()">Set PIN</button>
+        </div>
+
+        <!-- For New Users or Users with PIN -->
+        <div id="profile-pin-forgot" style="display:none;">
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px;">Your 4-digit security PIN is set.</div>
+          <button style="background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.3);color:var(--gold);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.86rem;padding:12px 28px;border-radius:8px;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;" onclick="forgotWithdrawalPin()">Forgot PIN?</button>
+        </div>
       </div>
 
       <!-- Log Out (Mobile Friendly) -->
@@ -3201,6 +3214,14 @@ function loadProfile(){
   document.getElementById('profile-email').value=email;
   var pinInput = document.getElementById('profile-withdraw-pin');
   if (pinInput) pinInput.value = ''; // Do not display PIN for security
+  
+  if (!currentUser.withdrawalPin) {
+    document.getElementById('profile-pin-setup').style.display = 'block';
+    document.getElementById('profile-pin-forgot').style.display = 'none';
+  } else {
+    document.getElementById('profile-pin-setup').style.display = 'none';
+    document.getElementById('profile-pin-forgot').style.display = 'block';
+  }
 
   // Update profile card display
   var initials = 'U';
@@ -3459,6 +3480,29 @@ async function changePassword(){
       showToast('Password updated successfully!','#00FF88');
     } else {
       showToast(res.error || 'Failed to update password', '#FF3B3B');
+    }
+  } catch(e) {
+    showToast('An error occurred', '#FF3B3B');
+  }
+}
+
+async function setInitialWithdrawalPin() {
+  var pin = document.getElementById('profile-withdraw-pin').value.trim();
+  if (!pin || !/^\d{4}$/.test(pin)) {
+    showToast('PIN must be exactly 4 digits!', '#FFAA00');
+    return;
+  }
+  showToast('Setting PIN...', '#4488FF');
+  try {
+    var res = await api('PUT', '/api/user/withdraw-pin', { pin: pin });
+    if(res.success) {
+      document.getElementById('profile-withdraw-pin').value = ''; 
+      showToast('Withdrawal PIN set successfully!', '#00FF88');
+      currentUser.withdrawalPin = pin;
+      localStorage.setItem('blaze_user', JSON.stringify(currentUser));
+      loadProfile(); // Refresh UI
+    } else {
+      showToast(res.error || 'Failed to set PIN', '#FF3B3B');
     }
   } catch(e) {
     showToast('An error occurred', '#FF3B3B');
