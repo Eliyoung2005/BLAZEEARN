@@ -259,6 +259,7 @@
         .btn-reject { background: var(--destructive); color: #fff; }
         .btn-outline { background: transparent; border: 1px solid var(--border); }
         .btn-outline:hover { background: rgba(255,255,255,0.05); }
+        .btn-outline.active-filter { background: var(--primary); color: white; border-color: var(--primary); }
 
         /* Tables */
         .table-container {
@@ -601,8 +602,13 @@
 
         <!-- WITHDRAWALS TAB -->
         <div id="withdrawalsTab" class="tab-content">
-            <div class="header">
+            <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
                 <h1>Withdrawals</h1>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn btn-sm btn-outline active-filter" id="wd-tab-all" onclick="filterWithdrawals('all')">All</button>
+                    <button class="btn btn-sm btn-outline" id="wd-tab-referral" onclick="filterWithdrawals('referral')">Affiliate</button>
+                    <button class="btn btn-sm btn-outline" id="wd-tab-activity" onclick="filterWithdrawals('activity')">Non-Affiliate</button>
+                </div>
             </div>
 
             <div class="table-container">
@@ -785,6 +791,9 @@
             }
         };
 
+        let allWithdrawalsData = [];
+        let currentWdFilter = 'all';
+
         // Core Data Fetching
         async function loadData() {
             try {
@@ -801,6 +810,7 @@
                 const users = usersRes.users || [];
                 const coupons = couponsRes.coupons || [];
                 const wds = wdsRes.withdrawals || [];
+                allWithdrawalsData = wds;
                 const tasks = tasksRes.tasks || [];
                 const vendors = vendorsRes.vendors || [];
                 const dataClaimsList = claimsRes.claims || [];
@@ -831,7 +841,7 @@
 
                 populateUsers(users);
                 populateCoupons(coupons, vendors);
-                populateWithdrawals(wds);
+                filterWithdrawals(currentWdFilter);
                 populateTasks(tasks);
                 populateVendors(vendors);
                 populateDataClaims(dataClaimsList);
@@ -1044,6 +1054,20 @@
             });
         }
         
+        function filterWithdrawals(type) {
+            currentWdFilter = type;
+            document.getElementById('wd-tab-all').classList.remove('active-filter');
+            document.getElementById('wd-tab-referral').classList.remove('active-filter');
+            document.getElementById('wd-tab-activity').classList.remove('active-filter');
+            document.getElementById('wd-tab-' + type).classList.add('active-filter');
+
+            let filtered = allWithdrawalsData;
+            if (type !== 'all') {
+                filtered = allWithdrawalsData.filter(w => w.type === type);
+            }
+            populateWithdrawals(filtered);
+        }
+
         function populateWithdrawals(wds) {
             const tbody = document.getElementById('wdsTableBody');
             tbody.innerHTML = '';
