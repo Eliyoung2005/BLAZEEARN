@@ -2187,8 +2187,10 @@ async function api(method, endpoint, data=null, isAdmin=false) {
     var res = await fetch(API_BASE_URL + endpoint, opts);
     if (!res.ok) {
       if(res.status === 401 || res.status === 403) {
-        if(isAdmin && typeof logoutAdmin === 'function') logoutAdmin();
-        else if (typeof handleLogout === 'function') handleLogout();
+        if (endpoint !== '/api/auth/login' && endpoint !== '/api/admin/login') {
+          if(isAdmin && typeof logoutAdmin === 'function') logoutAdmin();
+          else if (typeof handleLogout === 'function') handleLogout();
+        }
       }
       var err = await res.json().catch(()=>({}));
       throw new Error(err.error || 'Request failed');
