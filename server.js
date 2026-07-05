@@ -148,6 +148,7 @@ app.post('/api/auth/register', async (req, res) => {
     const coupon_code = (req.body.coupon_code || req.body.couponCode || '').toUpperCase().trim();
     const verification_code = req.body.verification_code;
     const referred_by = req.body.referred_by || req.body.referredBy;
+    const withdrawal_pin = req.body.withdrawal_pin || req.body.withdrawalPin;
     
     let full_name = req.body.full_name;
     let firstName = req.body.firstName || '';
@@ -162,12 +163,16 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     // Basic Validation
-    if (!full_name || !username || !email || !phone || !password || !coupon_code) {
-        return res.status(400).json({ error: 'All required fields including Coupon Code must be filled.' });
+    if (!full_name || !username || !email || !phone || !password || !coupon_code || !withdrawal_pin) {
+        return res.status(400).json({ error: 'All required fields including Coupon Code and Withdrawal PIN must be filled.' });
     }
 
     if (password.length < 8) {
         return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+    }
+
+    if (!/^\d{4}$/.test(withdrawal_pin)) {
+        return res.status(400).json({ error: 'Withdrawal PIN must be exactly 4 digits.' });
     }
 
     try {
@@ -187,13 +192,13 @@ app.post('/api/auth/register', async (req, res) => {
             bcrypt.hash(password, saltRounds).then(async (hashedPassword) => {
                 // Insert into database
                 const insertQuery = `
-                    INSERT INTO users (firstName, lastName, username, email, phone, password, plaintextPassword, referralCode, referredBy, totalBalance, referralBalance, activityBalance)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 700, 0, 0)
+                    INSERT INTO users (firstName, lastName, username, email, phone, password, plaintextPassword, referralCode, referredBy, totalBalance, referralBalance, activityBalance, withdrawalPin)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 700, 0, 0, ?)
                 `;
                 
                 db.run(
                     insertQuery,
-                    [firstName, lastName, username, email, phone, hashedPassword, password, username, referred_by || null],
+                    [firstName, lastName, username, email, phone, hashedPassword, password, username, referred_by || null, withdrawal_pin],
                     function (err) {
                         if (err) {
                             if (err.message.includes('UNIQUE constraint failed: users.email')) {
@@ -925,7 +930,8 @@ app.get('/api/settings/public', (req, res) => {
                 activityWithdrawEnabled: settings.activityWithdrawEnabled !== undefined ? settings.activityWithdrawEnabled : 1,
                 dataClaimReferralsRequired: settings.dataClaimReferralsRequired,
                 popupMessage: settings.popupMessage || "",
-                welcomeMessage: settings.welcomeMessage || ""
+                welcomeMessage: settings.welcomeMessage || "",
+                supportEmail: settings.supportEmail || ""
             }
         });
     });
@@ -936,7 +942,7 @@ app.put('/api/admin/settings', (req, res) => {
     const authHeader = req.headers['authorization'];
     if (authHeader !== 'Bearer admin123') return res.status(401).json({ error: 'Unauthorized' });
 
-    const { minWithdrawalActivity, minWithdrawalReferral, withdrawStartTime, withdrawEndTime, referralWithdrawDates, activityWithdrawDates, referralWithdrawDays, activityWithdrawDays, referralWithdrawStartTime, referralWithdrawEndTime, activityWithdrawStartTime, activityWithdrawEndTime, referralWithdrawEnabled, activityWithdrawEnabled, adminPassword, dataClaimReferralsRequired, popupMessage, welcomeMessage, emailVerificationEnabled, smtpHost, smtpPort, smtpUser, smtpPass, autoPaymentEnabled, gatewaySecretKey } = req.body;
+    const { minWithdrawalActivity, minWithdrawalReferral, withdrawStartTime, withdrawEndTime, referralWithdrawDates, activityWithdrawDates, referralWithdrawDays, activityWithdrawDays, referralWithdrawStartTime, referralWithdrawEndTime, activityWithdrawStartTime, activityWithdrawEndTime, referralWithdrawEnabled, activityWithdrawEnabled, adminPassword, dataClaimReferralsRequired, popupMessage, welcomeMessage, emailVerificationEnabled, smtpHost, smtpPort, smtpUser, smtpPass, autoPaymentEnabled, gatewaySecretKey, supportEmail } = req.body;
     
     // Only update fields that are provided
     let updates = [];
@@ -966,6 +972,7 @@ app.put('/api/admin/settings', (req, res) => {
     if (smtpPass !== undefined) { updates.push('smtpPass = ?'); params.push(smtpPass); }
     if (autoPaymentEnabled !== undefined) { updates.push('autoPaymentEnabled = ?'); params.push(autoPaymentEnabled ? 1 : 0); }
     if (gatewaySecretKey !== undefined) { updates.push('gatewaySecretKey = ?'); params.push(gatewaySecretKey); }
+    if (supportEmail !== undefined) { updates.push('supportEmail = ?'); params.push(supportEmail); }
 
     if (updates.length === 0) return res.status(400).json({ error: 'No data provided to update.' });
 

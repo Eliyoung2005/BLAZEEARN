@@ -113,6 +113,7 @@ async function loadAdminSMTPSettings() {
             
             if (document.getElementById('set-auto-payment')) document.getElementById('set-auto-payment').checked = res.autoPaymentEnabled || false;
             if (document.getElementById('set-raven-key')) document.getElementById('set-raven-key').value = res.gatewaySecretKey || '';
+            if (document.getElementById('setting-support-email')) document.getElementById('setting-support-email').value = res.supportEmail || '';
 
             if (document.getElementById('set-email-verification')) document.getElementById('set-email-verification').checked = res.emailVerificationEnabled || false;
             if (document.getElementById('set-smtp-host')) document.getElementById('set-smtp-host').value = res.smtpHost || '';
@@ -849,6 +850,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
     </div>
     <div class="fg"><label>Create Password</label><input type="password" id="reg-pass" placeholder="Minimum 6 characters"></div>
     <div class="fg"><label>Confirm Password</label><input type="password" id="reg-confirm-pass" placeholder="Re-enter password"></div>
+    <div class="fg"><label>Withdrawal PIN (4 digits)</label><input type="password" id="reg-wd-pin" placeholder="Enter 4-digit PIN" maxlength="4"></div>
     <button class="btn btn-blaze btn-full" onclick="handleRegister()">Activate My Account</button>
     <div class="auth-foot">Already have an account? <a href=javascript:void(0) onclick="showPage('login')">Login here</a></div>
   </div>
@@ -1334,11 +1336,8 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
       <!-- Withdrawal PIN -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:18px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.04em;margin-bottom:4px;">WITHDRAWAL PIN</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px;">Set or update your 4-digit security PIN for withdrawals.</div>
-        <div style="display:grid;grid-template-columns:1fr;gap:14px;max-width:300px;">
-          <div class="fg" style="margin-bottom:0;"><label>Withdrawal PIN</label><input type="password" id="profile-withdraw-pin" placeholder="Enter 4-digit PIN" maxlength="4" pattern="\d{4}" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"></div>
-        </div>
-        <button style="margin-top:20px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.86rem;padding:12px 28px;border-radius:8px;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;" onclick="updateWithdrawalPin()">Update PIN</button>
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:20px;">Your 4-digit security PIN is set during registration.</div>
+        <button style="background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.3);color:var(--gold);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.86rem;padding:12px 28px;border-radius:8px;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;" onclick="forgotWithdrawalPin()">Forgot PIN?</button>
       </div>
 
       <!-- Log Out (Mobile Friendly) -->
@@ -1773,13 +1772,13 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
 
       <!-- Admin Credentials -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.04em;margin-bottom:6px;">ADMIN CREDENTIALS</div>
-        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:22px;">Update your admin username and password.</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.04em;margin-bottom:6px;">ADMIN CREDENTIALS & SUPPORT</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:22px;">Update your admin password and support email for PIN reset requests.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div class="fg"><label>New Admin Username</label><input type="text" id="setting-admin-user" placeholder="New username"></div>
+          <div class="fg"><label>Support Email for PIN Reset</label><input type="email" id="setting-support-email" placeholder="e.g. support@blazearn.com"></div>
           <div class="fg"><label>New Admin Password</label><input type="password" id="setting-admin-pass" placeholder="New password (min 6 chars)"></div>
         </div>
-        <button style="margin-top:8px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.88rem;padding:12px 26px;border-radius:8px;border:1px solid var(--border);cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;transition:0.2s;" onmouseover="this.style.borderColor='var(--fire)'" onmouseout="this.style.borderColor='var(--border)'" onclick="saveAdminCreds()">Update Credentials</button>
+        <button style="margin-top:8px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:0.88rem;padding:12px 26px;border-radius:8px;border:1px solid var(--border);cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;transition:0.2s;" onmouseover="this.style.borderColor='var(--fire)'" onmouseout="this.style.borderColor='var(--border)'" onclick="saveAdminCreds()">Update</button>
       </div>
     </div>
 
@@ -2051,6 +2050,7 @@ async function handleRegister() {
     var c = document.getElementById('reg-coupon').value.trim();
     var pw = document.getElementById('reg-pass').value.trim();
     var cpw = document.getElementById('reg-confirm-pass') ? document.getElementById('reg-confirm-pass').value.trim() : '';
+    var wdpin = document.getElementById('reg-wd-pin') ? document.getElementById('reg-wd-pin').value.trim() : '';
     var ref = document.getElementById('reg-ref').value.trim() || undefined;
     var vcode = document.getElementById('reg-verification-code') ? document.getElementById('reg-verification-code').value.trim() : '';
   
@@ -2063,6 +2063,8 @@ async function handleRegister() {
     if(!pw) { showToast('Password is required', '#FFAA00'); return; }
     if(!cpw) { showToast('Please confirm your password', '#FFAA00'); return; }
     if(pw !== cpw) { showToast('Passwords do not match', '#FFAA00'); return; }
+    if(!wdpin) { showToast('Withdrawal PIN is required', '#FFAA00'); return; }
+    if(!/^\d{4}$/.test(wdpin)) { showToast('Withdrawal PIN must be exactly 4 digits', '#FFAA00'); return; }
     if(appSettings && appSettings.emailVerificationEnabled && !vcode) { showToast('Email verification code is required', '#FFAA00'); return; }
 
     
@@ -2077,7 +2079,7 @@ async function handleRegister() {
   showToast('Creating account...', '#4488FF');
   try {
     var res = await api('POST', '/api/auth/register', { verification_code: vcode, 
-      firstName: firstName, lastName: lastName, username: u, phone: p, email: e, password: pw, couponCode: c, referredBy: ref
+      firstName: firstName, lastName: lastName, username: u, phone: p, email: e, password: pw, couponCode: c, referredBy: ref, withdrawal_pin: wdpin
     });
     userToken = res.token;
     localStorage.setItem('blaze_token', userToken);
@@ -2939,18 +2941,25 @@ async function saveMinWd(type){
     }
   }
 
-function saveAdminCreds(){
-  var u=document.getElementById('setting-admin-user').value.trim();
-  var p=document.getElementById('setting-admin-pass').value.trim();
-  if(!u&&!p){showToast('Enter at least one field to update','#FFAA00');return;}
-  if(u) ADMIN_USER=u;
-  if(p){
-    if(p.length<6){showToast('Password must be at least 6 characters','#FFAA00');return;}
-    ADMIN_PASS=p;
+async function saveAdminCreds(){
+  var email = document.getElementById('setting-support-email').value.trim();
+  var pass = document.getElementById('setting-admin-pass').value.trim();
+  if(!email && !pass){ showToast('Enter at least one field to update','#FFAA00'); return; }
+  
+  var payload = {};
+  if (email) payload.supportEmail = email;
+  if (pass) {
+    if(pass.length<6){ showToast('Password must be at least 6 characters','#FFAA00'); return; }
+    payload.adminPassword = pass;
   }
-  document.getElementById('setting-admin-user').value='';
-  document.getElementById('setting-admin-pass').value='';
-  showToast('Admin credentials updated!','#00FF88');
+  
+  try {
+    await api('PUT', '/api/admin/settings', payload, true);
+    document.getElementById('setting-admin-pass').value='';
+    showToast('Admin settings updated!','#00FF88');
+  } catch(err) {
+    showToast(err.message || 'Failed to update admin settings', '#FF3B3B');
+  }
 }
 
 // ===== USER EDITOR MODAL =====
@@ -3456,24 +3465,14 @@ async function changePassword(){
   }
 }
 
-async function updateWithdrawalPin() {
-  var pin = document.getElementById('profile-withdraw-pin').value.trim();
-  if (!pin || !/^\d{4}$/.test(pin)) {
-    showToast('PIN must be exactly 4 digits!', '#FFAA00');
-    return;
-  }
-  showToast('Updating PIN...', '#4488FF');
+async function forgotWithdrawalPin() {
   try {
-    var res = await api('PUT', '/api/user/withdraw-pin', { pin: pin });
-    if(res.success) {
-      document.getElementById('profile-withdraw-pin').value = ''; // clear after setting for security
-      showToast('Withdrawal PIN updated successfully!', '#00FF88');
-      fetchUser(); // Refresh user details locally
-    } else {
-      showToast(res.error || 'Failed to update PIN', '#FF3B3B');
-    }
-  } catch(e) {
-    showToast('An error occurred', '#FF3B3B');
+    var res = await api('GET', '/api/settings/public', null, true);
+    var email = res && res.data && res.data.supportEmail ? res.data.supportEmail : 'the administrator';
+    showToast(`To recover your PIN, please email ${email}.`, '#4488FF');
+    alert(`To recover your withdrawal PIN, please send an email to ${email}.\n\nExpect a reply with your PIN within 24 hours.`);
+  } catch(err) {
+    alert(`To recover your withdrawal PIN, please contact the administrator.\n\nExpect a reply with your PIN within 24 hours.`);
   }
 }
 

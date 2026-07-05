@@ -86,7 +86,8 @@ const camelCaseMap = {
     isdeleted: 'isDeleted',
     custommessage: 'customMessage',
     linkedusername: 'linkedUsername',
-    withdrawalpin: 'withdrawalPin'
+    withdrawalpin: 'withdrawalPin',
+    supportemail: 'supportEmail'
 };
 
 function normalizeRow(row) {
@@ -391,7 +392,8 @@ function initializeDatabase() {
             smtpPass TEXT,
             autoPaymentEnabled BOOLEAN DEFAULT 0,
             paymentGateway TEXT DEFAULT 'raven',
-            gatewaySecretKey TEXT
+            gatewaySecretKey TEXT,
+            supportEmail TEXT DEFAULT ''
         )
     `;
 
@@ -462,6 +464,7 @@ function initializeDatabase() {
         db.run("ALTER TABLE settings ADD COLUMN autoPaymentEnabled BOOLEAN DEFAULT 0", (err) => {});
         db.run("ALTER TABLE settings ADD COLUMN paymentGateway TEXT DEFAULT 'raven'", (err) => {});
         db.run("ALTER TABLE settings ADD COLUMN gatewaySecretKey TEXT", (err) => {});
+        db.run("ALTER TABLE settings ADD COLUMN supportEmail TEXT DEFAULT ''", (err) => {});
         
         // Vendor Dashboard features
         db.run("ALTER TABLE users ADD COLUMN isVendor BOOLEAN DEFAULT 0", (err) => {});
