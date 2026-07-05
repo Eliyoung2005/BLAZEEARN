@@ -257,7 +257,7 @@
       const radius = 280; // Size of the circular avatar
 
       // 2. Draw User Photo (Circle mask in the center) if available
-      if (hasUserImage && userImage.complete) {
+      if (hasUserImage && userImage && userImage.width > 0) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
@@ -318,16 +318,28 @@
 
     photoUpload.addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (file) {
+      if (!file) return;
+      
+      try {
         const reader = new FileReader();
         reader.onload = (event) => {
-          userImage.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            userImage = img;
             hasUserImage = true;
             drawCanvas();
           };
-          userImage.src = event.target.result;
+          img.onerror = () => {
+            alert("Sorry, we couldn't load this image. Please try a different photo.");
+          };
+          img.src = event.target.result;
+        };
+        reader.onerror = () => {
+          alert("Error reading file. Please try again.");
         };
         reader.readAsDataURL(file);
+      } catch (err) {
+        alert("Unexpected error: " + err.message);
       }
     });
 
