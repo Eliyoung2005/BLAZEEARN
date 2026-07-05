@@ -206,8 +206,6 @@
 
     // Redraw canvas whenever input changes
     function drawCanvas() {
-      if (!hasUserImage) return;
-
       // Show canvas, hide placeholder
       canvas.style.display = 'block';
       placeholder.style.display = 'none';
@@ -226,26 +224,28 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // 2. Draw User Photo (Circle mask in the center)
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       const radius = 280; // Size of the circular avatar
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
-      ctx.closePath();
-      ctx.clip();
+      // 2. Draw User Photo (Circle mask in the center) if available
+      if (hasUserImage && userImage.complete) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
 
-      // Cover logic for user photo
-      let uScale = Math.max((radius * 2) / userImage.width, (radius * 2) / userImage.height);
-      let ux = centerX - (userImage.width / 2) * uScale;
-      let uy = centerY - (userImage.height / 2) * uScale;
-      ctx.drawImage(userImage, ux, uy, userImage.width * uScale, userImage.height * uScale);
-      
-      ctx.restore();
+        // Cover logic for user photo
+        let uScale = Math.max((radius * 2) / userImage.width, (radius * 2) / userImage.height);
+        let ux = centerX - (userImage.width / 2) * uScale;
+        let uy = centerY - (userImage.height / 2) * uScale;
+        ctx.drawImage(userImage, ux, uy, userImage.width * uScale, userImage.height * uScale);
+        
+        ctx.restore();
+      }
 
-      // Add a nice ring around the photo
+      // Add a nice ring around the photo area (even if empty)
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
       ctx.lineWidth = 15;
@@ -253,24 +253,24 @@
       ctx.stroke();
 
       // 3. Draw User Name
-      const nameText = userNameInput.value.trim().toUpperCase();
-      if (nameText) {
-        ctx.font = 'bold 60px "Plus Jakarta Sans", sans-serif';
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = 'rgba(0,0,0,0.8)';
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 5;
-        // Position it below the avatar and "Verified Vendor" text
-        ctx.fillText(nameText, centerX, centerY + radius + 140);
-      }
-
+      const nameText = userNameInput.value.trim().toUpperCase() || 'YOUR NAME';
+      
+      ctx.font = 'bold 60px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 15;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 5;
+      // Position it below the avatar and "Verified Vendor" text
+      ctx.fillText(nameText, centerX, centerY + radius + 140);
+      
+      // Enable download if name is entered or photo is uploaded
       downloadBtn.disabled = false;
     }
 
     bgImage.onload = () => {
-      if (hasUserImage) drawCanvas();
+      drawCanvas();
     };
 
     photoUpload.addEventListener('change', (e) => {
