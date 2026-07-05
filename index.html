@@ -3191,7 +3191,7 @@ function loadProfile(){
   document.getElementById('profile-phone').value=phone;
   document.getElementById('profile-email').value=email;
   var pinInput = document.getElementById('profile-withdraw-pin');
-  if (pinInput) pinInput.value = currentUser.withdrawalPin || '';
+  if (pinInput) pinInput.value = ''; // Do not display PIN for security
 
   // Update profile card display
   var initials = 'U';
@@ -3466,7 +3466,7 @@ async function updateWithdrawalPin() {
   try {
     var res = await api('PUT', '/api/user/withdraw-pin', { pin: pin });
     if(res.success) {
-      document.getElementById('profile-withdraw-pin').value = pin; // keep displayed
+      document.getElementById('profile-withdraw-pin').value = ''; // clear after setting for security
       showToast('Withdrawal PIN updated successfully!', '#00FF88');
       fetchUser(); // Refresh user details locally
     } else {
