@@ -191,8 +191,13 @@
     <p class="desc">Generate your official BlazeEarn DP to show you are a verified vendor.</p>
 
     <div class="form-group">
-      <label>1. Upload Your Photo (Square recommended)</label>
+      <label>1. Upload Your Photo</label>
       <input type="file" id="photo-upload" accept="image/*">
+    </div>
+
+    <div class="form-group" id="adjust-group" style="display: none;">
+      <label>↕️ Adjust Photo Position</label>
+      <input type="range" id="photo-offset" min="-150" max="150" value="0" style="width: 100%;">
     </div>
 
     <div class="form-group">
@@ -218,6 +223,8 @@
 
   <script>
     const photoUpload = document.getElementById('photo-upload');
+    const photoOffset = document.getElementById('photo-offset');
+    const adjustGroup = document.getElementById('adjust-group');
     const userNameInput = document.getElementById('user-name');
     const canvas = document.getElementById('dp-canvas');
     const ctx = canvas.getContext('2d');
@@ -267,7 +274,18 @@
         // Cover logic for user photo
         let uScale = Math.max((radius * 2) / userImage.width, (radius * 2) / userImage.height);
         let ux = centerX - (userImage.width / 2) * uScale;
-        let uy = centerY - (userImage.height / 2) * uScale;
+        
+        // Default to centering, but apply the user's manual offset
+        let baseUy = centerY - (userImage.height / 2) * uScale;
+        
+        // If it's a very tall portrait, default to showing the top (face area) more
+        if (userImage.height > userImage.width * 1.2 && photoOffset.value == 0) {
+           baseUy = centerY - (userImage.height * 0.3) * uScale;
+        }
+
+        let userOffset = parseInt(photoOffset.value);
+        let uy = baseUy + userOffset;
+
         ctx.drawImage(userImage, ux, uy, userImage.width * uScale, userImage.height * uScale);
         
         ctx.restore();
@@ -327,6 +345,8 @@
           img.onload = () => {
             userImage = img;
             hasUserImage = true;
+            adjustGroup.style.display = 'block'; // Show slider
+            photoOffset.value = 0; // Reset slider
             drawCanvas();
           };
           img.onerror = () => {
@@ -343,6 +363,7 @@
       }
     });
 
+    photoOffset.addEventListener('input', drawCanvas);
     userNameInput.addEventListener('input', drawCanvas);
 
     downloadBtn.addEventListener('click', () => {
