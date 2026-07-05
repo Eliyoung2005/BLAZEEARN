@@ -127,6 +127,27 @@
       color: var(--muted);
       text-align: center;
     }
+    .final-image-container {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .final-image-container img {
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(255,85,0,0.4);
+    }
+    .instruction {
+      color: var(--primary);
+      font-weight: bold;
+      margin-top: 15px;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
     .btn {
       width: 100%;
       padding: 16px;
@@ -187,7 +208,12 @@
       <canvas id="dp-canvas" width="1080" height="1080"></canvas>
     </div>
 
-    <button id="download-btn" class="btn" disabled>Generate & Download DP</button>
+    <button id="download-btn" class="btn" disabled>GENERATE DP</button>
+
+    <div class="final-image-container" id="final-container">
+      <div class="instruction">👇 LONG PRESS THE IMAGE BELOW TO SAVE 👇</div>
+      <img id="final-image" src="" alt="Generated DP">
+    </div>
   </div>
 
   <script>
@@ -197,6 +223,8 @@
     const ctx = canvas.getContext('2d');
     const downloadBtn = document.getElementById('download-btn');
     const placeholder = document.getElementById('preview-placeholder');
+    const finalContainer = document.getElementById('final-container');
+    const finalImage = document.getElementById('final-image');
 
     let bgImage = new Image();
     bgImage.src = 'dp-bg.png'; // The generated background template
@@ -252,21 +280,36 @@
       ctx.strokeStyle = '#FF8800';
       ctx.stroke();
 
-      // 3. Draw User Name
+      // 3. Draw User Name and VERIFIED VENDOR bold text
       const nameText = userNameInput.value.trim().toUpperCase() || 'YOUR NAME';
       
-      ctx.font = 'bold 60px "Plus Jakarta Sans", sans-serif';
-      ctx.fillStyle = '#ffffff';
+      // Draw a dark glowing background over the original cursive text to hide it
+      ctx.fillStyle = 'rgba(10, 10, 10, 0.85)';
+      ctx.shadowColor = '#FF8800';
+      ctx.shadowBlur = 30;
+      ctx.beginPath();
+      ctx.roundRect(centerX - 400, centerY + radius + 30, 800, 200, 20);
+      ctx.fill();
+      ctx.shadowBlur = 0; // reset shadow
+      
+      // Draw the new BOLD "VERIFIED VENDOR ✔️"
+      ctx.font = '900 65px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#FF8800';
       ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 10;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 5;
-      // Position it below the avatar and "Verified Vendor" text
-      ctx.fillText(nameText, centerX, centerY + radius + 140);
+      ctx.fillText('VERIFIED VENDOR ✔️', centerX, centerY + radius + 110);
+      
+      // Draw User Name
+      ctx.font = 'bold 55px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(nameText, centerX, centerY + radius + 190);
       
       // Enable download if name is entered or photo is uploaded
       downloadBtn.disabled = false;
+      finalContainer.style.display = 'none'; // hide final image if they change something
     }
 
     bgImage.onload = () => {
@@ -291,12 +334,25 @@
     userNameInput.addEventListener('input', drawCanvas);
 
     downloadBtn.addEventListener('click', () => {
-      if (!hasUserImage) return;
+      // Force draw to make sure we have latest
+      drawCanvas();
       
-      const link = document.createElement('a');
-      link.download = `BlazeEarn_DP_${userNameInput.value.trim() || 'Vendor'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        finalImage.src = dataUrl;
+        finalContainer.style.display = 'block';
+        
+        // Scroll to the final image
+        finalContainer.scrollIntoView({ behavior: 'smooth' });
+        
+        // Try direct download as fallback for desktop
+        const link = document.createElement('a');
+        link.download = `BlazeEarn_DP_${userNameInput.value.trim() || 'Vendor'}.png`;
+        link.href = dataUrl;
+        link.click();
+      } catch (e) {
+        alert("Error generating image: " + e.message);
+      }
     });
   </script>
 </body>
