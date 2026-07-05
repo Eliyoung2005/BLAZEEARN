@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlazeEarn DP Generator</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #141414;
+      --border: #222;
+      --primary: #FF8800;
+      --fire: #FF5500;
+      --gold: #FFAA00;
+      --text: #ffffff;
+      --muted: #888888;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      width: 100%;
+      padding: 20px 0;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: rgba(20,20,20,0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header img {
+      height: 40px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+    header span {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      color: var(--primary);
+      vertical-align: middle;
+      letter-spacing: 0.05em;
+    }
+    .container {
+      max-width: 600px;
+      width: 90%;
+      margin: 40px auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      letter-spacing: 0.05em;
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: center;
+      background: -webkit-linear-gradient(45deg, var(--gold), var(--fire));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.desc {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #ddd;
+    }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 14px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      box-sizing: border-box;
+      outline: none;
+      transition: 0.3s;
+    }
+    input[type="text"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(255,136,0,0.2);
+    }
+    .preview-container {
+      width: 100%;
+      aspect-ratio: 1;
+      max-width: 400px;
+      margin: 30px auto;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      display: none;
+      border-radius: 10px;
+    }
+    #preview-placeholder {
+      color: var(--muted);
+      text-align: center;
+    }
+    .btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(45deg, var(--fire), var(--primary));
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: 0.3s;
+      box-shadow: 0 5px 15px rgba(255,85,0,0.3);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255,85,0,0.5);
+    }
+    .btn:disabled {
+      background: var(--border);
+      color: var(--muted);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" style="text-decoration:none;">
+      <img src="logo.png" alt="BlazeEarn">
+      <span>BLAZEEARN</span>
+    </a>
+  </header>
+
+  <div class="container">
+    <h1>Verified Vendor DP</h1>
+    <p class="desc">Generate your official BlazeEarn DP to show you are a verified vendor.</p>
+
+    <div class="form-group">
+      <label>1. Upload Your Photo (Square recommended)</label>
+      <input type="file" id="photo-upload" accept="image/*">
+    </div>
+
+    <div class="form-group">
+      <label>2. Enter Your Name</label>
+      <input type="text" id="user-name" placeholder="e.g. Shem Ishaku" maxlength="25">
+    </div>
+
+    <div class="preview-container">
+      <div id="preview-placeholder">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📸</div>
+        <div>Upload a photo to see preview</div>
+      </div>
+      <canvas id="dp-canvas" width="1080" height="1080"></canvas>
+    </div>
+
+    <button id="download-btn" class="btn" disabled>Generate & Download DP</button>
+  </div>
+
+  <script>
+    const photoUpload = document.getElementById('photo-upload');
+    const userNameInput = document.getElementById('user-name');
+    const canvas = document.getElementById('dp-canvas');
+    const ctx = canvas.getContext('2d');
+    const downloadBtn = document.getElementById('download-btn');
+    const placeholder = document.getElementById('preview-placeholder');
+
+    let bgImage = new Image();
+    bgImage.src = 'dp-bg.png'; // The generated background template
+    
+    let userImage = new Image();
+    let hasUserImage = false;
+
+    // Redraw canvas whenever input changes
+    function drawCanvas() {
+      if (!hasUserImage) return;
+
+      // Show canvas, hide placeholder
+      canvas.style.display = 'block';
+      placeholder.style.display = 'none';
+
+      // 1. Draw Background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (bgImage.complete) {
+        // Cover logic for background
+        let scale = Math.max(canvas.width / bgImage.width, canvas.height / bgImage.height);
+        let x = (canvas.width / 2) - (bgImage.width / 2) * scale;
+        let y = (canvas.height / 2) - (bgImage.height / 2) * scale;
+        ctx.drawImage(bgImage, x, y, bgImage.width * scale, bgImage.height * scale);
+      } else {
+        // Fallback color if bg not loaded
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // 2. Draw User Photo (Circle mask in the center)
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 280; // Size of the circular avatar
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+
+      // Cover logic for user photo
+      let uScale = Math.max((radius * 2) / userImage.width, (radius * 2) / userImage.height);
+      let ux = centerX - (userImage.width / 2) * uScale;
+      let uy = centerY - (userImage.height / 2) * uScale;
+      ctx.drawImage(userImage, ux, uy, userImage.width * uScale, userImage.height * uScale);
+      
+      ctx.restore();
+
+      // Add a nice ring around the photo
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+      ctx.lineWidth = 15;
+      ctx.strokeStyle = '#FF8800';
+      ctx.stroke();
+
+      // 3. Draw User Name
+      const nameText = userNameInput.value.trim().toUpperCase();
+      if (nameText) {
+        ctx.font = 'bold 60px "Plus Jakarta Sans", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 5;
+        // Position it below the avatar and "Verified Vendor" text
+        ctx.fillText(nameText, centerX, centerY + radius + 140);
+      }
+
+      downloadBtn.disabled = false;
+    }
+
+    bgImage.onload = () => {
+      if (hasUserImage) drawCanvas();
+    };
+
+    photoUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          userImage.onload = () => {
+            hasUserImage = true;
+            drawCanvas();
+          };
+          userImage.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    userNameInput.addEventListener('input', drawCanvas);
+
+    downloadBtn.addEventListener('click', () => {
+      if (!hasUserImage) return;
+      
+      const link = document.createElement('a');
+      link.download = `BlazeEarn_DP_${userNameInput.value.trim() || 'Vendor'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html>
