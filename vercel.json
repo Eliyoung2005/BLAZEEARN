@@ -21,7 +21,9 @@
           "script.js",
           "admin.js",
           "robots.txt",
-          "sitemap.xml"
+          "sitemap.xml",
+          "dp.html",
+          "dp-bg.png"
         ]
       }
     }
