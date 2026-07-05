@@ -427,11 +427,18 @@
             </div>
 
             <div class="action-panel">
-                <h3><i class='bx bx-lock-alt'></i> Change Admin Password</h3>
-                <div class="form-grid">
-                    <input type="text" id="newAdminPassword" class="form-control" placeholder="New Admin Password">
+                <h3><i class='bx bx-lock-alt'></i> Admin Credentials & Support</h3>
+                <div class="form-grid" style="margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label>Support Email for PIN Reset</label>
+                        <input type="email" id="setSupportEmail" class="form-control" placeholder="e.g. support@blazearn.com">
+                    </div>
+                    <div class="form-group">
+                        <label>New Admin Password</label>
+                        <input type="text" id="newAdminPassword" class="form-control" placeholder="New Admin Password">
+                    </div>
                 </div>
-                <button class="btn btn-approve" onclick="changeAdminPassword()"><i class='bx bx-key'></i> Update Password</button>
+                <button class="btn btn-approve" onclick="changeAdminCreds()"><i class='bx bx-key'></i> Update Credentials</button>
             </div>
         </div>
 
@@ -831,6 +838,11 @@
                     if (popupInput && settingsRes.data.popupMessage !== undefined) {
                         popupInput.value = settingsRes.data.popupMessage;
                     }
+                    
+                    const supportInput = document.getElementById('setSupportEmail');
+                    if (supportInput && settingsRes.data.supportEmail !== undefined) {
+                        supportInput.value = settingsRes.data.supportEmail;
+                    }
                 }
 
                 // Overview Stats
@@ -888,13 +900,24 @@
             }
         }
 
-        async function changeAdminPassword() {
+        async function changeAdminCreds() {
             const adminPassword = document.getElementById('newAdminPassword').value;
-            if(!adminPassword) return alert("Please enter a new password");
+            const supportEmail = document.getElementById('setSupportEmail').value.trim();
+            if(!adminPassword && !supportEmail) return alert("Please enter at least one field to update");
+            
+            const payload = {};
+            if(adminPassword) payload.adminPassword = adminPassword;
+            if(supportEmail) payload.supportEmail = supportEmail;
+            
             try {
-                await api('PUT', '/api/admin/settings', { adminPassword });
-                alert('Admin Password updated successfully! Please login again with the new password.');
-                logout();
+                await api('PUT', '/api/admin/settings', payload);
+                let msg = 'Settings updated successfully!';
+                if (adminPassword) {
+                    msg += ' Please login again with the new password.';
+                }
+                alert(msg);
+                if (adminPassword) logout();
+                else document.getElementById('newAdminPassword').value = '';
             } catch(e) { alert(e.message); }
         }
 
