@@ -1563,21 +1563,29 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
       <div class="pane-title">WITHDRAWALS</div>
       <div class="pane-sub">Review and approve user withdrawal requests.</div>
       <div class="wd-tabs" style="margin-bottom:20px;">
-        <div class="wd-tab active" onclick="switchAdminWdTab('activity',this)">📋 Activity Withdrawals</div>
-        <div class="wd-tab" onclick="switchAdminWdTab('referral',this)">👥 Referral Withdrawals</div>
+        <div class="wd-tab active" onclick="switchAdminWdTab('all',this)">🌍 All Withdrawals</div>
+        <div class="wd-tab" onclick="switchAdminWdTab('referral',this)">👥 Affiliate Withdrawals</div>
+        <div class="wd-tab" onclick="switchAdminWdTab('activity',this)">📋 Non-Affiliate Withdrawals</div>
       </div>
-      <div id="admin-wd-activity" class="wd-panel active">
+      <div id="admin-wd-all" class="wd-panel active">
         <div class="tbox">
-          <div class="tbox-head"><h4>Activity Withdrawal Requests (15th Monthly)</h4></div>
-          <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Username</th><th>Amount</th><th>Bank</th><th>Account No.</th><th>Account Name</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-          <tbody id="admin-act-tbody"><tr><td colspan="9" style="color:var(--muted);text-align:center;padding:22px;">No activity withdrawals yet.</td></tr></tbody></table></div>
+          <div class="tbox-head"><h4>All Withdrawal Requests</h4></div>
+          <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Username</th><th>Amount</th><th>Bank</th><th>Account No.</th><th>Account Name</th><th>Date</th><th>Status</th><th>Type</th><th>Action</th></tr></thead>
+          <tbody id="admin-all-tbody"><tr><td colspan="10" style="color:var(--muted);text-align:center;padding:22px;">No withdrawals yet.</td></tr></tbody></table></div>
         </div>
       </div>
       <div id="admin-wd-referral" class="wd-panel">
         <div class="tbox">
-          <div class="tbox-head"><h4>Referral Withdrawal Requests</h4></div>
-          <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Username</th><th>Amount</th><th>Bank</th><th>Account No.</th><th>Account Name</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-          <tbody id="admin-ref-tbody"><tr><td colspan="9" style="color:var(--muted);text-align:center;padding:22px;">No referral withdrawals yet.</td></tr></tbody></table></div>
+          <div class="tbox-head"><h4>Affiliate Withdrawal Requests</h4></div>
+          <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Username</th><th>Amount</th><th>Bank</th><th>Account No.</th><th>Account Name</th><th>Date</th><th>Status</th><th>Type</th><th>Action</th></tr></thead>
+          <tbody id="admin-ref-tbody"><tr><td colspan="10" style="color:var(--muted);text-align:center;padding:22px;">No affiliate withdrawals yet.</td></tr></tbody></table></div>
+        </div>
+      </div>
+      <div id="admin-wd-activity" class="wd-panel">
+        <div class="tbox">
+          <div class="tbox-head"><h4>Non-Affiliate Withdrawal Requests (15th Monthly)</h4></div>
+          <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Username</th><th>Amount</th><th>Bank</th><th>Account No.</th><th>Account Name</th><th>Date</th><th>Status</th><th>Type</th><th>Action</th></tr></thead>
+          <tbody id="admin-act-tbody"><tr><td colspan="10" style="color:var(--muted);text-align:center;padding:22px;">No non-affiliate withdrawals yet.</td></tr></tbody></table></div>
         </div>
       </div>
     </div>
@@ -2515,7 +2523,8 @@ async function refreshWithdrawalTables(){
 
     var wdHtml=function(list,isAdmin){
       return list.map(function(w){
-        return '<tr><td style="color:var(--muted);">'+w.id+'</td>'+(isAdmin?'<td>@'+w.username+'</td>':'')+'<td>N'+w.amount.toLocaleString()+'</td><td>'+w.bank+'</td><td style="font-family:monospace;">'+w.accnum+'</td>'+(isAdmin?'<td>'+w.accname+'</td>':'')+'<td>'+w.date+'</td><td><span class="badge badge-'+w.status+'">'+w.status+'</span></td>'+(isAdmin?'<td>'+(w.status==='pending'?'<button class="btn-approve" onclick="approveWd('+w.id+')">Approve</button>':'—')+'</td>':'')+'</tr>';
+        var tBadge = isAdmin ? '<td><span style="font-size:0.75rem;text-transform:uppercase;color:var(--muted);">'+w.type+'</span></td>' : '';
+        return '<tr><td style="color:var(--muted);">'+w.id+'</td>'+(isAdmin?'<td>@'+w.username+'</td>':'')+'<td>N'+w.amount.toLocaleString()+'</td><td>'+w.bank+'</td><td style="font-family:monospace;">'+w.accnum+'</td>'+(isAdmin?'<td>'+w.accname+'</td>':'')+'<td>'+w.date+'</td><td><span class="badge badge-'+w.status+'">'+w.status+'</span></td>'+tBadge+(isAdmin?'<td>'+(w.status==='pending'?'<button class="btn-approve" onclick="approveWd('+w.id+')">Approve</button>':'—')+'</td>':'')+'</tr>';
       }).join('');
     };
 
@@ -2523,10 +2532,12 @@ async function refreshWithdrawalTables(){
       var allTbody=document.getElementById('all-wd-tbody');
       if(allTbody)allTbody.innerHTML=arr.length?wdHtml(arr,false):'<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:26px;">No withdrawals yet.</td></tr>';
     } else {
+      var aAllTbody=document.getElementById('admin-all-tbody');
       var aActTbody=document.getElementById('admin-act-tbody');
       var aRefTbody=document.getElementById('admin-ref-tbody');
-      if(aActTbody)aActTbody.innerHTML=actWds.length?wdHtml(actWds,true):'<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:22px;">No activity withdrawals yet.</td></tr>';
-      if(aRefTbody)aRefTbody.innerHTML=refWds.length?wdHtml(refWds,true):'<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:22px;">No referral withdrawals yet.</td></tr>';
+      if(aAllTbody)aAllTbody.innerHTML=arr.length?wdHtml(arr,true):'<tr><td colspan="10" style="color:var(--muted);text-align:center;padding:22px;">No withdrawals yet.</td></tr>';
+      if(aActTbody)aActTbody.innerHTML=actWds.length?wdHtml(actWds,true):'<tr><td colspan="10" style="color:var(--muted);text-align:center;padding:22px;">No non-affiliate withdrawals yet.</td></tr>';
+      if(aRefTbody)aRefTbody.innerHTML=refWds.length?wdHtml(refWds,true):'<tr><td colspan="10" style="color:var(--muted);text-align:center;padding:22px;">No affiliate withdrawals yet.</td></tr>';
     }
     if (isAdminPage && typeof updateAdminStats === 'function') updateAdminStats();
   } catch(err) {
