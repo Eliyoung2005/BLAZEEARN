@@ -1551,19 +1551,6 @@ app.get('/api/vercel-debug', (req, res) => {
     });
 });
 
-// TEMPORARY WIPE ROUTE
-app.get('/api/wipe-everything-clean', (req, res) => {
-    db.serialize(() => {
-        db.run('DELETE FROM users');
-        db.run('DELETE FROM coupons');
-        db.run('DELETE FROM tasks');
-        db.run('DELETE FROM user_tasks');
-        db.run('DELETE FROM withdrawals');
-        db.run('DELETE FROM vendors');
-        db.run('DELETE FROM data_claims');
-        res.json({ message: 'Production database wiped completely clean!' });
-    });
-});
 
 // Catch-all route to prevent Express from sending HTML errors for unknown routes
 app.use((req, res) => {
