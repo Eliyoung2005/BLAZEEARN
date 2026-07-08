@@ -1557,6 +1557,20 @@ app.use((req, res) => {
     res.status(404).json({ error: `The endpoint ${req.method} ${req.url} does not exist on this backend.` });
 });
 
+// TEMPORARY WIPE ROUTE
+app.get('/api/wipe-everything-clean', (req, res) => {
+    db.serialize(() => {
+        db.run('DELETE FROM users');
+        db.run('DELETE FROM coupons');
+        db.run('DELETE FROM tasks');
+        db.run('DELETE FROM user_tasks');
+        db.run('DELETE FROM withdrawals');
+        db.run('DELETE FROM vendors');
+        db.run('DELETE FROM data_claims');
+        res.json({ message: 'Production database wiped completely clean!' });
+    });
+});
+
 // Start the server
 if (require.main === module) {
     app.listen(PORT, '0.0.0.0', () => {
