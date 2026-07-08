@@ -1559,8 +1559,8 @@ app.use((req, res) => {
 
 // Start the server
 if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`Blaze Earn backend server running on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Blaze Earn backend server running on http://0.0.0.0:${PORT}`);
     });
 }
 
