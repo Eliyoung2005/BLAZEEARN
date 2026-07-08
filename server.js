@@ -1525,7 +1525,7 @@ app.get('/api/public/top-earners', (req, res) => {
         ) indirect ON u.username = indirect.grandparent
         WHERE (COALESCE(direct.cnt, 0) * 500) + (COALESCE(indirect.cnt, 0) * 50) > 0
         ORDER BY totalEarned DESC
-        LIMIT 5
+        LIMIT 15
     `;
     db.all(query, [], (err, rows) => {
         if (err) return res.status(500).json({ error: 'Database error.' });
