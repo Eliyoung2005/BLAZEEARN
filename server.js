@@ -1551,12 +1551,6 @@ app.get('/api/vercel-debug', (req, res) => {
     });
 });
 
-// Catch-all route to prevent Express from sending HTML errors for unknown routes
-app.use((req, res) => {
-    console.log(`[404 NOT FOUND] Route doesn't exist: ${req.method} ${req.url}`);
-    res.status(404).json({ error: `The endpoint ${req.method} ${req.url} does not exist on this backend.` });
-});
-
 // TEMPORARY WIPE ROUTE
 app.get('/api/wipe-everything-clean', (req, res) => {
     db.serialize(() => {
@@ -1569,6 +1563,12 @@ app.get('/api/wipe-everything-clean', (req, res) => {
         db.run('DELETE FROM data_claims');
         res.json({ message: 'Production database wiped completely clean!' });
     });
+});
+
+// Catch-all route to prevent Express from sending HTML errors for unknown routes
+app.use((req, res) => {
+    console.log(`[404 NOT FOUND] Route doesn't exist: ${req.method} ${req.url}`);
+    res.status(404).json({ error: `The endpoint ${req.method} ${req.url} does not exist on this backend.` });
 });
 
 // Start the server
