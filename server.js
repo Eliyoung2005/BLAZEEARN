@@ -1511,7 +1511,9 @@ app.get('/api/public/top-earners', (req, res) => {
     const query = `
         SELECT 
             u.username,
-            (COALESCE(direct.cnt, 0) * 500) + (COALESCE(indirect.cnt, 0) * 50) AS totalEarned
+            (COALESCE(direct.cnt, 0) * 500) + (COALESCE(indirect.cnt, 0) * 50) AS totalEarned,
+            (SELECT COUNT(*) FROM withdrawals w WHERE w.username = u.username AND w.type IN ('referral', 'referrals')) as refPaid,
+            (SELECT COUNT(*) FROM withdrawals w WHERE w.username = u.username AND w.type = 'activity') as actPaid
         FROM users u
         LEFT JOIN (
             SELECT referredBy, COUNT(*) as cnt FROM users WHERE referredBy IS NOT NULL GROUP BY referredBy
@@ -1532,7 +1534,9 @@ app.get('/api/public/top-earners', (req, res) => {
         // Map the result so the frontend receives it correctly
         const formatted = rows.map(r => ({
             username: r.username,
-            totalReferralEarnings: r.totalEarned !== undefined ? r.totalEarned : (r.totalearned !== undefined ? r.totalearned : 0)
+            totalReferralEarnings: r.totalEarned !== undefined ? r.totalEarned : (r.totalearned !== undefined ? r.totalearned : 0),
+            refPaid: r.refPaid > 0,
+            actPaid: r.actPaid > 0
         }));
         res.status(200).json({ success: true, earners: formatted });
     });

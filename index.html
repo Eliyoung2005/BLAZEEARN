@@ -3412,13 +3412,18 @@ async function loadDashboardTopEarners() {
                 const rankColor = idx < 3 ? colors[idx] : 'var(--muted)';
                 const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
                 
+                let paidTag = '';
+                if(earner.refPaid && earner.actPaid) paidTag = '<span style="font-size:0.6rem;background:rgba(0,255,136,0.1);color:var(--green);padding:2px 4px;border-radius:4px;margin-left:5px;vertical-align:middle;border:1px solid rgba(0,255,136,0.3);">Both Paid</span>';
+                else if(earner.refPaid) paidTag = '<span style="font-size:0.6rem;background:rgba(0,255,136,0.1);color:var(--green);padding:2px 4px;border-radius:4px;margin-left:5px;vertical-align:middle;border:1px solid rgba(0,255,136,0.3);">Affiliate Paid</span>';
+                else if(earner.actPaid) paidTag = '<span style="font-size:0.6rem;background:rgba(0,255,136,0.1);color:var(--green);padding:2px 4px;border-radius:4px;margin-left:5px;vertical-align:middle;border:1px solid rgba(0,255,136,0.3);">Non-Affiliate Paid</span>';
+
                 const card = document.createElement('div');
                 card.className = 'top-earner-card';
                 card.innerHTML = `
                     <div class="top-earner-left">
                         <div class="top-earner-rank" style="color:${rankColor}">#${idx+1}</div>
                         <div>
-                            <div style="font-weight:700;font-size:1rem;">${earner.username} ${medal}</div>
+                            <div style="font-weight:700;font-size:1rem;display:flex;align-items:center;">${earner.username} ${medal} ${paidTag}</div>
                         </div>
                     </div>
                     <div class="top-earner-right" style="text-align:right;">
@@ -3672,11 +3677,17 @@ async function loadTopEarners() {
         container.innerHTML = earners.map(function(e, idx) {
             var rank = idx + 1;
             var initial = e.username.charAt(0).toUpperCase();
+            
+            var paidTag = '';
+            if(e.refPaid && e.actPaid) paidTag = '<span style="font-size:0.6rem;background:rgba(0,255,136,0.1);color:var(--green);padding:2px 4px;border-radius:4px;margin-left:5px;vertical-align:middle;border:1px solid rgba(0,255,136,0.3);">Both Paid</span>';
+            else if(e.refPaid) paidTag = '<span style="font-size:0.6rem;background:rgba(0,255,136,0.1);color:var(--green);padding:2px 4px;border-radius:4px;margin-left:5px;vertical-align:middle;border:1px solid rgba(0,255,136,0.3);">Affiliate Paid</span>';
+            else if(e.actPaid) paidTag = '<span style="font-size:0.6rem;background:rgba(0,255,136,0.1);color:var(--green);padding:2px 4px;border-radius:4px;margin-left:5px;vertical-align:middle;border:1px solid rgba(0,255,136,0.3);">Non-Affiliate Paid</span>';
+
             return '<div class="top-earner-card">' +
                    '<div class="top-earner-left">' +
                    '<div class="top-earner-rank">#' + rank + '</div>' +
                    '<div class="top-earner-avatar">' + initial + '</div>' +
-                   '<div class="top-earner-name">@' + e.username + '</div>' +
+                   '<div class="top-earner-name" style="display:flex;align-items:center;">@' + e.username + paidTag + '</div>' +
                    '</div>' +
                    '<div class="top-earner-val">₦' + e.totalReferralEarnings.toLocaleString() + '</div>' +
                    '</div>';
