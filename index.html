@@ -3798,6 +3798,7 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshTasksAdminTable();
         refreshDataClaimsTable();
         refreshWithdrawalTables();
+        showPage('landing');
     } else if (userToken && !hasRef) {
         loadDataClaims();
         var savedUser = localStorage.getItem('blaze_user');
@@ -3812,6 +3813,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if(typeof fetchUser === 'function') fetchUser();
         if(typeof loadDashboardTopEarners === 'function') loadDashboardTopEarners();
+        showPage('landing');
     } else if (hasRef && !userToken) {
         userToken = null;
         currentUser = null;
