@@ -1881,7 +1881,21 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
     </div>
   </div>
 
-  
+  <!-- PIN Recovery Modal -->
+  <div class="modal-overlay" id="pin-recovery-modal">
+    <div class="modal" style="text-align:center; max-width:400px; padding:30px;">
+      <button class="modal-close" onclick="document.getElementById('pin-recovery-modal').classList.remove('active')">&times;</button>
+      <div style="font-size:3.5rem;margin-bottom:15px;text-shadow: 0 0 20px rgba(255,170,0,0.4);">🔐</div>
+      <h3 style="margin-bottom:12px;font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--gold);letter-spacing:1px;">Recover PIN</h3>
+      <div style="color:var(--text);font-size:0.95rem;margin-bottom:25px;line-height:1.6;">
+        To recover your 4-digit withdrawal PIN, please send an email to the administrator by clicking the button below.<br><br>
+        <span style="color:var(--muted);font-size:0.85rem;">Expect a reply with your PIN within 24 hours.</span>
+      </div>
+      <a id="pin-recovery-email-btn" href="mailto:blazeearn2026@gmail.com" class="btn btn-blaze" style="width:100%; display:block; text-decoration:none; margin-bottom:10px; padding:15px; font-size:1.05rem;">Email blazeearn2026@gmail.com</a>
+      <button class="btn btn-ghost" style="width:100%; padding:15px; font-size:1.05rem;" onclick="document.getElementById('pin-recovery-modal').classList.remove('active')">Cancel</button>
+    </div>
+  </div>
+
   <!-- Targeted Popup Modal -->
   <div class="modal-overlay" id="targeted-popup-modal" style="backdrop-filter: blur(8px); z-index: 10001;">
     <div class="modal" style="max-width:400px; text-align:center; background: rgba(30, 30, 35, 0.95); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 10px 40px rgba(0,0,0,0.6); backdrop-filter: blur(15px); animation: modalScaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
@@ -3530,11 +3544,20 @@ async function setInitialWithdrawalPin() {
 async function forgotWithdrawalPin() {
   try {
     var res = await api('GET', '/api/settings/public', null, true);
-    var email = res && res.data && res.data.supportEmail ? res.data.supportEmail : 'the administrator';
-    showToast(`To recover your PIN, please email ${email}.`, '#4488FF');
-    alert(`To recover your withdrawal PIN, please send an email to ${email}.\n\nExpect a reply with your PIN within 24 hours.`);
+    var email = res && res.data && res.data.supportEmail ? res.data.supportEmail : 'blazeearn2026@gmail.com';
+    var btn = document.getElementById('pin-recovery-email-btn');
+    if (btn) {
+        btn.href = 'mailto:' + email;
+        btn.innerText = 'Email ' + email;
+    }
+    document.getElementById('pin-recovery-modal').classList.add('active');
   } catch(err) {
-    alert(`To recover your withdrawal PIN, please contact the administrator.\n\nExpect a reply with your PIN within 24 hours.`);
+    var btn = document.getElementById('pin-recovery-email-btn');
+    if (btn) {
+        btn.href = 'mailto:blazeearn2026@gmail.com';
+        btn.innerText = 'Email blazeearn2026@gmail.com';
+    }
+    document.getElementById('pin-recovery-modal').classList.add('active');
   }
 }
 
