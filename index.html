@@ -1872,7 +1872,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
 
   <!-- Welcome Message Modal -->
   <div class="modal-overlay" id="welcome-modal">
-    <div class="modal-box" style="text-align:center;">
+    <div class="modal" style="text-align:center;">
       <button class="modal-close" onclick="document.getElementById('welcome-modal').classList.remove('active')">&times;</button>
       <div style="font-size:3rem;margin-bottom:10px;">🎉</div>
       <h3 style="margin-bottom:12px;font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--green);">Welcome to BlazeEarn!</h3>
@@ -3299,7 +3299,7 @@ function loadProfile(){
     function checkWelcomePopup() {
         if (sessionStorage.getItem('just_registered') === 'true') {
             sessionStorage.removeItem('just_registered');
-            api('GET', '/api/settings/public').then(function(res) {
+            api('GET', '/api/settings/public?_t=' + Date.now()).then(function(res) {
                 if (res && res.data && res.data.welcomeMessage) {
                     document.getElementById('welcome-msg-text').innerHTML = res.data.welcomeMessage;
                     document.getElementById('welcome-modal').classList.add('active');
