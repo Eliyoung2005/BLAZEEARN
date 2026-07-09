@@ -2252,6 +2252,15 @@ function closeDrawer() {
 }
 
 function showPage(pageId) {
+  if (pageId === 'login' && userToken) {
+    pageId = 'dashboard';
+    showPanel('home');
+    syncBottomNav('home');
+    loadProfile();
+  } else if (pageId === 'admin-portal' && adminToken) {
+    loadActualAdminDashboard();
+    return;
+  }
   var pages = document.querySelectorAll('.page');
   pages.forEach(function(p){ p.classList.remove('active'); });
   var target = document.getElementById(pageId);
@@ -3780,7 +3789,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (adminToken) {
-        loadActualAdminDashboard();
+        // Just preload it in the background, don't auto-redirect
+        updateAdminStats();
+        refreshCouponsTable();
+        refreshVendorAdminList();
+        refreshUsersTable();
+        refreshVendorDropdown();
+        refreshTasksAdminTable();
+        refreshDataClaimsTable();
+        refreshWithdrawalTables();
     } else if (userToken && !hasRef) {
         loadDataClaims();
         var savedUser = localStorage.getItem('blaze_user');
@@ -3788,9 +3805,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try{currentUser=JSON.parse(savedUser);}catch(e){}
         }
         updateVendorUI();
-        showPage('dashboard');
-        showPanel('home');
-        syncBottomNav('home');
+        // Load data in background, but stay on landing page
         loadProfile();
         if(currentUser && currentUser.isVendor && typeof loadVendorDashboard === 'function') {
             loadVendorDashboard();
