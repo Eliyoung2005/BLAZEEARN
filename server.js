@@ -634,6 +634,7 @@ app.delete('/api/admin/users/:id', (req, res) => {
             db.run('DELETE FROM withdrawals WHERE username = ?', [username]);
             db.run('DELETE FROM vendors WHERE linkedUsername = ?', [username]);
             db.run('UPDATE coupons SET assignedVendor = NULL WHERE assignedVendor = ?', [username]);
+            db.run('DELETE FROM coupons WHERE usedBy = ?', [username]);
             
             db.run('DELETE FROM users WHERE id = ?', [userIdToDelete], function(err) {
                 if (err) return res.status(500).json({ error: 'Database error while deleting user' });
