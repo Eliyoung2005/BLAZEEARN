@@ -3789,16 +3789,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (adminToken) {
-        // Just preload it in the background, don't auto-redirect
-        updateAdminStats();
-        refreshCouponsTable();
-        refreshVendorAdminList();
-        refreshUsersTable();
-        refreshVendorDropdown();
-        refreshTasksAdminTable();
-        refreshDataClaimsTable();
-        refreshWithdrawalTables();
-        showPage('landing');
+        loadActualAdminDashboard();
     } else if (userToken && !hasRef) {
         loadDataClaims();
         var savedUser = localStorage.getItem('blaze_user');
