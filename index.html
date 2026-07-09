@@ -2114,6 +2114,7 @@ async function handleRegister() {
     showPanel('home');
     if(typeof loadSettings === 'function') loadSettings();
     showToast('Welcome to BlazeEarn!', '#00FF88');
+    if (typeof checkWelcomePopup === 'function') checkWelcomePopup();
   } catch(err) {
     showToast(err.message, '#FF3B3B');
   }
@@ -3295,14 +3296,16 @@ function loadProfile(){
         sbAv.style.backgroundImage = 'linear-gradient(135deg,var(--fire),var(--gold))';
         sbAv.textContent = initials; } } updateBalanceDisplay(); } 
     // Welcome message check for newly registered users
-    if (sessionStorage.getItem('just_registered') === 'true') {
-        sessionStorage.removeItem('just_registered');
-        api('GET', '/api/settings/public').then(function(res) {
-            if (res && res.data && res.data.welcomeMessage) {
-                document.getElementById('welcome-msg-text').innerHTML = res.data.welcomeMessage;
-                document.getElementById('welcome-modal').classList.add('active');
-            }
-        });
+    function checkWelcomePopup() {
+        if (sessionStorage.getItem('just_registered') === 'true') {
+            sessionStorage.removeItem('just_registered');
+            api('GET', '/api/settings/public').then(function(res) {
+                if (res && res.data && res.data.welcomeMessage) {
+                    document.getElementById('welcome-msg-text').innerHTML = res.data.welcomeMessage;
+                    document.getElementById('welcome-modal').classList.add('active');
+                }
+            });
+        }
     }
 
 function updateBalanceDisplay() {
