@@ -1326,6 +1326,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <div class="fg" style="margin-bottom:0;"><label>Full Name</label><input type="text" id="profile-name" placeholder="Your full name"></div>
           <div class="fg" style="margin-bottom:0;"><label>Username</label><input type="text" id="profile-username" placeholder="Your username" readonly style="background:rgba(255,255,255,0.05); color:var(--muted); cursor:not-allowed;" title="Username cannot be changed to protect your referral links."></div>
+          <div class="fg" style="margin-bottom:0;"><label>Coupon Code Used</label><input type="text" id="profile-coupon" placeholder="N/A" readonly style="background:rgba(255,255,255,0.05); color:var(--fire); cursor:not-allowed; font-weight:bold; font-family:'Bebas Neue', sans-serif; letter-spacing:1px;" title="The coupon code used during registration."></div>
           <div class="fg" style="margin-bottom:0;"><label>Phone Number</label><input type="tel" id="profile-phone" placeholder="e.g. 08012345678"></div>
           <div class="fg" style="margin-bottom:0;"><label>Email Address</label><input type="email" id="profile-email" placeholder="your@email.com"></div>
         </div>
@@ -3260,6 +3261,8 @@ function loadProfile(){
     var pName = document.getElementById('profile-name');
   if(pName) pName.value=name;
   document.getElementById('profile-username').value=username;
+  var pCoupon = document.getElementById('profile-coupon');
+  if(pCoupon) pCoupon.value = currentUser.used_coupon || 'None';
   document.getElementById('profile-phone').value=phone;
   document.getElementById('profile-email').value=email;
   var pinInput = document.getElementById('profile-withdraw-pin');

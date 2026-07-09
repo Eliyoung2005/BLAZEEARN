@@ -230,7 +230,7 @@ app.post('/api/auth/register', async (req, res) => {
                         const newUserId = this.lastID;
 
                         // Mark coupon as used and associate it with the new user's username
-                        db.run('UPDATE coupons SET isUsed = 1, usedBy = ? WHERE code = ?', [username, coupon_code], function(err) {
+                        db.run('UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?', [username, coupon_code], function(err) {
                             if (err) {
                                 console.error('Error updating coupon:', err.message);
                             }
@@ -393,7 +393,7 @@ app.get('/api/user/profile', (req, res) => {
         return res.status(401).json({ error: 'Unauthorized: Invalid token' });
     }
 
-    db.get('SELECT * FROM users WHERE id = ?', [userId], async (err, user) => {
+    db.get('SELECT u.*, c.code AS usedCoupon FROM users u LEFT JOIN coupons c ON c.usedBy = u.username WHERE u.id = ?', [userId], async (err, user) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -410,7 +410,8 @@ app.get('/api/user/profile', (req, res) => {
                 activity_balance: user.activityBalance || 0,
                 direct_referrals: refStats.directCount,
                 indirect_referrals: refStats.indirectCount,
-                targetedPopup: user.targetedPopup
+                targetedPopup: user.targetedPopup,
+                used_coupon: user.usedCoupon || 'None'
             }
         });
     });
