@@ -167,8 +167,8 @@ app.post('/api/auth/register', async (req, res) => {
         return res.status(400).json({ error: 'All required fields including Coupon Code and Withdrawal PIN must be filled.' });
     }
 
-    if (password.length < 8) {
-        return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+    if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
     }
 
     if (!/^\d{4}$/.test(withdrawal_pin)) {
@@ -177,7 +177,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     try {
         // First check if coupon is valid
-        db.get('SELECT * FROM coupons WHERE code = ? AND isUsed = FALSE AND (isDeleted IS NULL OR isDeleted = FALSE)', [coupon_code], (err, coupon) => {
+        db.get('SELECT * FROM coupons WHERE code = ? AND (isUsed = 0 OR isUsed = FALSE) AND (isDeleted IS NULL OR isDeleted = 0 OR isDeleted = FALSE)', [coupon_code], (err, coupon) => {
             if (err) {
                 console.error('Database error:', err.message);
                 return res.status(500).json({ error: 'Internal server error.' });
@@ -564,12 +564,12 @@ app.put('/api/admin/users/:id/vendor', (req, res) => {
     db.get('SELECT * FROM users WHERE id = ?', [req.params.id], (err, user) => {
         if (err || !user) return res.status(404).json({ error: 'User not found' });
         
-        db.run('UPDATE users SET isVendor = TRUE WHERE id = ?', [req.params.id], function(err) {
+        db.run('UPDATE users SET isVendor = 1 WHERE id = ?', [req.params.id], function(err) {
             if (err) return res.status(500).json({ error: 'Failed to upgrade user' });
             
-            // Also insert into vendors table
-            db.run('INSERT INTO vendors (name, contact, linkedUsername) VALUES (?, ?, ?)',
-                [`${user.firstName} ${user.lastName}`, user.phone || '', user.username], 
+            // Also insert into vendors table only if they don't exist
+            db.run('INSERT INTO vendors (name, contact, linkedUsername) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM vendors WHERE linkedUsername = ?)',
+                [`${user.firstName} ${user.lastName}`, user.phone || '', user.username, user.username], 
                 function(err) {
                     res.json({ success: true, message: 'User upgraded to vendor' });
                 }
@@ -586,7 +586,7 @@ app.put('/api/admin/users/:id/remove-vendor', (req, res) => {
     db.get('SELECT * FROM users WHERE id = ?', [req.params.id], (err, user) => {
         if (err || !user) return res.status(404).json({ error: 'User not found' });
         
-        db.run('UPDATE users SET isVendor = FALSE WHERE id = ?', [req.params.id], function(err) {
+        db.run('UPDATE users SET isVendor = 0 WHERE id = ?', [req.params.id], function(err) {
             if (err) return res.status(500).json({ error: 'Failed to demote user' });
             
             // Also delete from vendors table
@@ -1508,7 +1508,12 @@ app.delete('/api/admin/tasks/:id', (req, res) => {
 });
 
 // Public Endpoint to get Top Earners by All-Time Referral Earnings
+let topEarnersCache = { data: null, lastUpdated: 0 };
 app.get('/api/public/top-earners', (req, res) => {
+    const now = Date.now();
+    if (topEarnersCache.data && (now - topEarnersCache.lastUpdated < 60000)) {
+        return res.status(200).json({ success: true, earners: topEarnersCache.data });
+    }
     const query = `
         SELECT 
             u.username,
@@ -1539,6 +1544,8 @@ app.get('/api/public/top-earners', (req, res) => {
             refPaid: r.refPaid > 0,
             actPaid: r.actPaid > 0
         }));
+        topEarnersCache.data = formatted;
+        topEarnersCache.lastUpdated = Date.now();
         res.status(200).json({ success: true, earners: formatted });
     });
 });

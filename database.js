@@ -549,6 +549,7 @@ function initializeDatabase() {
         db.run('CREATE INDEX IF NOT EXISTS idx_users_referredby ON users(referredBy)');
         db.run('CREATE INDEX IF NOT EXISTS idx_withdrawals_username ON withdrawals(username)');
         db.run('CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code)');
+        db.run('CREATE INDEX IF NOT EXISTS idx_coupons_usedBy ON coupons(usedBy)');
     });
 }
 
