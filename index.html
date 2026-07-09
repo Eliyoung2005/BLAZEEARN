@@ -642,7 +642,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
 <body>
 
 <!-- ===== LANDING ===== -->
-<div id="landing" class="page active">
+<div id="landing" class="page">
   <nav class="land-nav">
     <div style="display:flex;align-items:center;">
       <button class="hamburger-btn" onclick="openDrawer()">☰</button>
@@ -3767,6 +3767,9 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionStorage.removeItem('global_popup_shown');
         if(document.getElementById('sb-vendor-area')) document.getElementById('sb-vendor-area').style.display = 'none';
         if(document.getElementById('bn-vendor-area')) document.getElementById('bn-vendor-area').style.display = 'none';
+        showPage('landing');
+    } else {
+        showPage('landing');
     }
 });
 
