@@ -49,8 +49,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Serve static files from the main directory and public directory (without serving their index.html by default)
-app.use(express.static(path.join(__dirname), { index: false }));
+app.use(express.static(path.join(__dirname), { 
+    index: false,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        }
+    }
+}));
 
 // Handle referral links and redirect to index with query parameter
 app.get('/ref/:username', (req, res) => {
