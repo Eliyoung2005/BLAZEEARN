@@ -581,7 +581,7 @@ app.put('/api/admin/users/:id/vendor', (req, res) => {
         if (err || !user) return res.status(404).json({ error: 'User not found' });
         
         db.run('UPDATE users SET isVendor = 1 WHERE id = ?', [req.params.id], function(err) {
-            if (err) return res.status(500).json({ error: 'Failed to upgrade user' });
+            if (err) return res.status(500).json({ error: 'Failed to upgrade user: ' + (err.message || err.toString()) });
             
             // Also insert into vendors table only if they don't exist
             db.get('SELECT id FROM vendors WHERE linkedUsername = ?', [user.username], (err, existingVendor) => {
