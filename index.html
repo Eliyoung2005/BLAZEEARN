@@ -2800,7 +2800,7 @@ function refreshPublicVendors(){
   el.style.display = 'block'; // Make it full width block to avoid grid restrictions
   var tbody = vendors.map(function(v){
     var pic=v.pic?'<img src="'+v.pic+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid var(--border); flex-shrink:0;">':'<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--fire),var(--gold));display:flex;align-items:center;justify-content:center;color:#000;font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;flex-shrink:0;">'+v.name[0].toUpperCase()+'</div>';
-    var safeMsg = v.customMessage ? v.customMessage.replace(/'/g,"\\'").replace(/"/g,'&quot;') : '';
+    var safeMsg = v.customMessage ? v.customMessage.replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g, '\\n').replace(/\r/g, '') : '';
     return '<tr>'+
            '<td style="display:flex;align-items:center;gap:16px;padding:16px 24px;border-bottom:1px solid var(--border);">'+pic+'<span style="font-weight:700;font-size:1.05rem;color:var(--text);">'+v.name+'</span></td>'+
            '<td style="padding:16px 24px;border-bottom:1px solid var(--border);color:var(--muted);font-size:0.95rem;">'+(v.location?'📍 '+v.location:'BlazeEarn Vendor')+'</td>'+
