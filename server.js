@@ -584,12 +584,18 @@ app.put('/api/admin/users/:id/vendor', (req, res) => {
             if (err) return res.status(500).json({ error: 'Failed to upgrade user' });
             
             // Also insert into vendors table only if they don't exist
-            db.run('INSERT INTO vendors (name, contact, linkedUsername) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM vendors WHERE linkedUsername = ?)',
-                [`${user.firstName} ${user.lastName}`, user.phone || '', user.username, user.username], 
-                function(err) {
+            db.get('SELECT id FROM vendors WHERE linkedUsername = ?', [user.username], (err, existingVendor) => {
+                if (!existingVendor) {
+                    db.run('INSERT INTO vendors (name, contact, linkedUsername) VALUES (?, ?, ?)',
+                        [`${user.firstName} ${user.lastName}`, user.phone || '0000000000', user.username], 
+                        function(err) {
+                            res.json({ success: true, message: 'User upgraded to vendor' });
+                        }
+                    );
+                } else {
                     res.json({ success: true, message: 'User upgraded to vendor' });
                 }
-            );
+            });
         });
     });
 });
