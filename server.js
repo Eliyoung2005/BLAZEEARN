@@ -1607,21 +1607,31 @@ app.use((req, res) => {
 if (require.main === module) {
     // Retro-active fix for existing users missing their coupons due to the Postgres bug
     try {
-        db.all('SELECT username FROM users WHERE username NOT IN (SELECT usedBy FROM coupons WHERE usedBy IS NOT NULL)', [], (err, usersWithoutCoupon) => {
-            if (!err && usersWithoutCoupon && usersWithoutCoupon.length > 0) {
-                db.all('SELECT code FROM coupons WHERE isUsed = 0 OR isUsed = FALSE OR isUsed IS NULL LIMIT ?', [usersWithoutCoupon.length], (err2, availableCoupons) => {
-                    if (!err2 && availableCoupons && availableCoupons.length > 0) {
-                        usersWithoutCoupon.forEach((u, i) => {
-                            if (availableCoupons[i]) {
-                                db.run('UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?', [u.username, availableCoupons[i].code], (err3) => {
-                                    if(err3) console.error('Error assigning retroactive coupon:', err3.message);
-                                });
-                            }
-                        });
-                        console.log(`[Auto-Fix] Re-assigned ${availableCoupons.length} coupons to existing users.`);
-                    }
-                });
-            }
+        db.all('SELECT username FROM users', [], (err, allUsers) => {
+            if (err || !allUsers) return;
+            db.all('SELECT * FROM coupons', [], (err2, allCoupons) => {
+                if (err2 || !allCoupons) return;
+                
+                const usedUsernames = allCoupons.filter(c => c.usedBy).map(c => c.usedBy);
+                const usersWithoutCoupon = allUsers.filter(u => u.username !== 'admin' && !usedUsernames.includes(u.username));
+                
+                if (usersWithoutCoupon.length > 0) {
+                    const availableCoupons = allCoupons.filter(c => {
+                        const isUsed = (c.isUsed === 1 || c.isUsed === '1' || c.isUsed === true || c.isUsed === 'TRUE');
+                        const isDeleted = (c.isDeleted === 1 || c.isDeleted === '1' || c.isDeleted === true || c.isDeleted === 'TRUE');
+                        return !isUsed && !isDeleted;
+                    });
+                    
+                    usersWithoutCoupon.forEach((u, i) => {
+                        if (availableCoupons[i]) {
+                            db.run('UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?', [u.username, availableCoupons[i].code], (err3) => {
+                                if(err3) console.error('Error assigning retroactive coupon:', err3.message);
+                            });
+                        }
+                    });
+                    console.log(`[Auto-Fix] Re-assigned ${Math.min(usersWithoutCoupon.length, availableCoupons.length)} coupons to existing users.`);
+                }
+            });
         });
     } catch(e) {
         console.error('Error running retroactive coupon fix on startup:', e);
