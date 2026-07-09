@@ -240,9 +240,7 @@ if (usePostgres) {
         // Seed the persistent volume with our local database if the volume database is empty/smaller
         const localDbPath = path.resolve(__dirname, 'users.db');
         if (dbPath !== localDbPath && fs.existsSync(localDbPath)) {
-            const targetSize = fs.existsSync(dbPath) ? fs.statSync(dbPath).size : 0;
-            const localSize = fs.statSync(localDbPath).size;
-            if (targetSize < localSize) {
+            if (!fs.existsSync(dbPath) || fs.statSync(dbPath).size === 0) {
                 try {
                     fs.copyFileSync(localDbPath, dbPath);
                     console.log('Seeded persistent volume database from local users.db');
