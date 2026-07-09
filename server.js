@@ -1306,13 +1306,22 @@ app.post('/api/admin/vendors', (req, res) => {
     const authHeader = req.headers['authorization'];
     if (authHeader !== 'Bearer admin123') return res.status(401).json({ error: 'Unauthorized' });
 
-    const { name, contact, pic, location, customMessage } = req.body;
-    if (!name || !contact) return res.status(400).json({ error: 'Name and contact required.' });
+    const { name, contact, phone, pic, location, customMessage, linkedUsername } = req.body;
+    const finalContact = contact || phone;
+    if (!name || !finalContact) return res.status(400).json({ error: 'Name and contact required.' });
 
-    db.run('INSERT INTO vendors (name, contact, pic, location, customMessage) VALUES (?, ?, ?, ?, ?)',
-        [name, contact, pic || '', location || '', customMessage || ''], function(err) {
+    db.run('INSERT INTO vendors (name, contact, pic, location, customMessage, linkedUsername) VALUES (?, ?, ?, ?, ?, ?)',
+        [name, finalContact, pic || '', location || '', customMessage || '', linkedUsername || null], function(err) {
         if (err) return res.status(500).json({ error: 'Failed to add vendor.' });
-        res.status(201).json({ success: true, vendor: { id: this.lastID, name, contact, pic, location, customMessage: customMessage || '' } });
+        const newVendorId = this.lastID;
+        
+        if (linkedUsername) {
+            db.run('UPDATE users SET isVendor = 1 WHERE username = ?', [linkedUsername], function(err2) {
+                res.status(201).json({ success: true, vendor: { id: newVendorId, name, contact: finalContact, pic, location, customMessage: customMessage || '', linkedUsername } });
+            });
+        } else {
+            res.status(201).json({ success: true, vendor: { id: newVendorId, name, contact: finalContact, pic, location, customMessage: customMessage || '', linkedUsername: null } });
+        }
     });
 });
 
