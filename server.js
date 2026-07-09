@@ -177,14 +177,24 @@ app.post('/api/auth/register', async (req, res) => {
 
     try {
         // First check if coupon is valid
-        db.get('SELECT * FROM coupons WHERE code = ? AND (isUsed = 0 OR isUsed = FALSE) AND (isDeleted IS NULL OR isDeleted = 0 OR isDeleted = FALSE)', [coupon_code], (err, coupon) => {
+        db.get('SELECT * FROM coupons WHERE code = ?', [coupon_code], (err, coupon) => {
             if (err) {
                 console.error('Database error:', err.message);
                 return res.status(500).json({ error: 'Internal server error.' });
             }
 
             if (!coupon) {
-                return res.status(400).json({ error: 'Invalid or already used Coupon Code.' });
+                return res.status(400).json({ error: 'Invalid Coupon Code. It does not exist.' });
+            }
+
+            const isDeleted = (coupon.isDeleted === 1 || coupon.isDeleted === '1' || coupon.isDeleted === true || coupon.isDeleted === 'TRUE');
+            if (isDeleted) {
+                return res.status(400).json({ error: 'This Coupon Code has been deleted.' });
+            }
+
+            const isUsed = (coupon.isUsed === 1 || coupon.isUsed === '1' || coupon.isUsed === true || coupon.isUsed === 'TRUE');
+            if (isUsed) {
+                return res.status(400).json({ error: 'This Coupon Code has already been used.' });
             }
 
             // Hash the password securely
@@ -214,7 +224,7 @@ app.post('/api/auth/register', async (req, res) => {
                         const newUserId = this.lastID;
 
                         // Mark coupon as used and associate it with the new user's username
-                        db.run('UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?', [username, coupon_code], function(err) {
+                        db.run('UPDATE coupons SET isUsed = 1, usedBy = ? WHERE code = ?', [username, coupon_code], function(err) {
                             if (err) {
                                 console.error('Error updating coupon:', err.message);
                             }
@@ -879,7 +889,12 @@ app.get('/api/admin/coupons', (req, res) => {
             console.error('Error fetching coupons:', err.message);
             return res.status(500).json({ error: 'Internal server error.' });
         }
-        res.status(200).json({ coupons: rows });
+        const formatted = rows.map(r => ({
+            ...r,
+            isUsed: (r.isUsed === 1 || r.isUsed === '1' || r.isUsed === true || r.isUsed === 'TRUE'),
+            isDeleted: (r.isDeleted === 1 || r.isDeleted === '1' || r.isDeleted === true || r.isDeleted === 'TRUE')
+        }));
+        res.status(200).json({ coupons: formatted });
     });
 });
 
