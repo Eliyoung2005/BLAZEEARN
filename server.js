@@ -1605,6 +1605,28 @@ app.use((req, res) => {
 
 // Start the server
 if (require.main === module) {
+    // Retro-active fix for existing users missing their coupons due to the Postgres bug
+    try {
+        db.all('SELECT username FROM users WHERE username NOT IN (SELECT usedBy FROM coupons WHERE usedBy IS NOT NULL)', [], (err, usersWithoutCoupon) => {
+            if (!err && usersWithoutCoupon && usersWithoutCoupon.length > 0) {
+                db.all('SELECT code FROM coupons WHERE isUsed = 0 OR isUsed = FALSE OR isUsed IS NULL LIMIT ?', [usersWithoutCoupon.length], (err2, availableCoupons) => {
+                    if (!err2 && availableCoupons && availableCoupons.length > 0) {
+                        usersWithoutCoupon.forEach((u, i) => {
+                            if (availableCoupons[i]) {
+                                db.run('UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?', [u.username, availableCoupons[i].code], (err3) => {
+                                    if(err3) console.error('Error assigning retroactive coupon:', err3.message);
+                                });
+                            }
+                        });
+                        console.log(`[Auto-Fix] Re-assigned ${availableCoupons.length} coupons to existing users.`);
+                    }
+                });
+            }
+        });
+    } catch(e) {
+        console.error('Error running retroactive coupon fix on startup:', e);
+    }
+
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`Blaze Earn backend server running on http://0.0.0.0:${PORT}`);
     });
