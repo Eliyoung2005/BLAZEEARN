@@ -2215,6 +2215,9 @@ var tasks = [];
 // API helper function
 async function api(method, endpoint, data=null, isAdmin=false) {
   var token = isAdmin ? adminToken : userToken;
+  if (method === 'GET') {
+    endpoint += (endpoint.includes('?') ? '&' : '?') + '_t=' + Date.now();
+  }
   try {
     var opts = {
       method: method,
