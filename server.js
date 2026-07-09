@@ -580,8 +580,8 @@ app.put('/api/admin/users/:id/vendor', (req, res) => {
     db.get('SELECT * FROM users WHERE id = ?', [req.params.id], (err, user) => {
         if (err || !user) return res.status(404).json({ error: 'User not found' });
         
-        db.run('UPDATE users SET isVendor = 1 WHERE id = ?', [req.params.id], function(err) {
-            if (err) return res.status(500).json({ error: 'Failed to upgrade user: ' + (err.message || err.toString()) });
+        db.run('UPDATE users SET isVendor = true WHERE id = ?', [req.params.id], function(err) {
+            if (err) return res.status(500).json({ error: 'Failed to upgrade user' });
             
             // Also insert into vendors table only if they don't exist
             db.get('SELECT id FROM vendors WHERE linkedUsername = ?', [user.username], (err, existingVendor) => {
@@ -608,7 +608,7 @@ app.put('/api/admin/users/:id/remove-vendor', (req, res) => {
     db.get('SELECT * FROM users WHERE id = ?', [req.params.id], (err, user) => {
         if (err || !user) return res.status(404).json({ error: 'User not found' });
         
-        db.run('UPDATE users SET isVendor = 0 WHERE id = ?', [req.params.id], function(err) {
+        db.run('UPDATE users SET isVendor = false WHERE id = ?', [req.params.id], function(err) {
             if (err) return res.status(500).json({ error: 'Failed to demote user' });
             
             // Also delete from vendors table
