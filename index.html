@@ -2050,7 +2050,7 @@ async function handleLogin() {
     if (u.toLowerCase() === 'admin') {
       var res = await api('POST', '/api/admin/login', {username: u, password: p});
       adminToken = res.token;
-      sessionStorage.setItem('blaze_admin_token', adminToken);
+      localStorage.setItem('blaze_admin_token', adminToken);
       showPage('admin');
       updateAdminStats();refreshCouponsTable();refreshVendorAdminList();
       var cv = document.getElementById('coupon-vendor');
@@ -2061,9 +2061,9 @@ async function handleLogin() {
     } else {
       var res = await api('POST', '/api/auth/login', { username: u, password: p });
       userToken = res.token;
-      sessionStorage.setItem('blaze_token', userToken);
+      localStorage.setItem('blaze_token', userToken);
       currentUser = res.user;
-      sessionStorage.setItem('blaze_user', JSON.stringify(currentUser));
+      localStorage.setItem('blaze_user', JSON.stringify(currentUser));
         updateVendorUI();
         if (currentUser.isVendor) {
             loadVendorDashboard();
@@ -2119,10 +2119,10 @@ async function handleRegister() {
       firstName: firstName, lastName: lastName, username: u, phone: p, email: e, password: pw, couponCode: c, referredBy: ref, withdrawal_pin: wdpin
     });
     userToken = res.token;
-    sessionStorage.setItem('blaze_token', userToken);
+    localStorage.setItem('blaze_token', userToken);
     currentUser = res.user;
-    sessionStorage.setItem('blaze_user', JSON.stringify(currentUser));
-    sessionStorage.setItem('just_registered', 'true');
+    localStorage.setItem('blaze_user', JSON.stringify(currentUser));
+    localStorage.setItem('just_registered', 'true');
     loadProfile();
     showPage('dashboard');
     showPanel('home');
@@ -2138,10 +2138,10 @@ function handleLogout() {
   userToken = null;
   currentUser = null;
   adminToken = null;
-  sessionStorage.removeItem('blaze_token');
-  sessionStorage.removeItem('blaze_user');
-  sessionStorage.removeItem('blaze_admin_token');
-  sessionStorage.removeItem('global_popup_shown');
+  localStorage.removeItem('blaze_token');
+  localStorage.removeItem('blaze_user');
+  localStorage.removeItem('blaze_admin_token');
+  localStorage.removeItem('global_popup_shown');
   if(document.getElementById('sb-vendor-area')) document.getElementById('sb-vendor-area').style.display = 'none';
   if(document.getElementById('bn-vendor-area')) document.getElementById('bn-vendor-area').style.display = 'none';
   showPage('landing');
@@ -2203,8 +2203,8 @@ window.addEventListener('DOMContentLoaded', async function(){
 });
 
 var currentUser = null;
-var userToken = sessionStorage.getItem('blaze_token') || null;
-var adminToken = sessionStorage.getItem('blaze_admin_token') || null;
+var userToken = localStorage.getItem('blaze_token') || null;
+var adminToken = localStorage.getItem('blaze_admin_token') || null;
 var users = [];
 var coupons = [];
 var vendors = [];
@@ -2367,7 +2367,7 @@ function renderTasks() {
       '<div class="task-body">' +
         '<div class="task-instructions">Instructions: ' + t.instructions + '</div>' +
         '<div class="task-actions">' +
-          '<a href="' + t.link + '" target="_blank" class="btn-link" onclick="sessionStorage.setItem(\'task_opened_' + t.id + '\', \'true\')">🌐 Open Task Link</a>' +
+          '<a href="' + t.link + '" target="_blank" class="btn-link" onclick="localStorage.setItem(\'task_opened_' + t.id + '\', \'true\')">🌐 Open Task Link</a>' +
           (done ? '<button class="btn-done completed" disabled>✅ Completed</button>' :
             '<button class="btn-done" onclick="completeTask(' + i + ',this)">I\'ve Done This - Earn N' + t.reward + '</button>') +
         '</div>' +
@@ -2379,7 +2379,7 @@ function renderTasks() {
 async function completeTask(idx, btn){
   var task=tasks[idx];
   if(!task||!currentUser)return;
-  if (!sessionStorage.getItem('task_opened_' + task.id)) {
+  if (!localStorage.getItem('task_opened_' + task.id)) {
       return showToast('You must open the task link before completing it!', '#FF3B3B');
   }
   btn.disabled=true; btn.textContent='Verifying...';
@@ -2390,12 +2390,12 @@ async function completeTask(idx, btn){
     var newTotal = res.new_total_balance !== undefined ? res.new_total_balance : ((currentUser.total_balance || 0) + task.reward);
     currentUser.activity_balance = newAct;
     currentUser.total_balance = newTotal;
-    sessionStorage.setItem('blaze_user', JSON.stringify(currentUser));
+    localStorage.setItem('blaze_user', JSON.stringify(currentUser));
     updateBalanceDisplay();
     btn.textContent='✅ Completed';
     btn.className='btn-done completed';
-    sessionStorage.removeItem('task_opened_' + task.id);
-    sessionStorage.removeItem('task_opened_' + task.id);
+    localStorage.removeItem('task_opened_' + task.id);
+    localStorage.removeItem('task_opened_' + task.id);
     showToast('+₦'+task.reward+' activity earnings added!','#00FF88');
   } catch(err){
     btn.disabled=false;
@@ -2534,7 +2534,7 @@ async function submitWithdrawal(){
     // Update local currentUser balances directly so the UI responds immediately
     if(type==='activity'){currentUser.activity_balance-=amount;}else{currentUser.referral_balance-=amount;}
     currentUser.total_balance-=amount;
-    sessionStorage.setItem('blaze_user', JSON.stringify(currentUser));
+    localStorage.setItem('blaze_user', JSON.stringify(currentUser));
     updateBalanceDisplay();
     refreshWithdrawalTables();
     closeWdForm();
@@ -2609,7 +2609,7 @@ async function handleAdminLogin(){
   try {
     var res = await api('POST', '/api/admin/login', {username: u, password: p});
     adminToken = res.token;
-    sessionStorage.setItem('blaze_admin_token', adminToken);
+    localStorage.setItem('blaze_admin_token', adminToken);
     showPage('admin');
     updateAdminStats();refreshCouponsTable();refreshVendorAdminList();
   var cv = document.getElementById('coupon-vendor');
@@ -3323,8 +3323,8 @@ function loadProfile(){
         sbAv.textContent = initials; } } updateBalanceDisplay(); } 
     // Welcome message check for newly registered users
     function checkWelcomePopup() {
-        if (sessionStorage.getItem('just_registered') === 'true') {
-            sessionStorage.removeItem('just_registered');
+        if (localStorage.getItem('just_registered') === 'true') {
+            localStorage.removeItem('just_registered');
             api('GET', '/api/settings/public?_t=' + Date.now()).then(function(res) {
                 if (res && res.data && res.data.welcomeMessage) {
                     document.getElementById('welcome-msg-text').innerHTML = res.data.welcomeMessage;
@@ -3481,7 +3481,7 @@ async function loadDashboardTopEarners() {
 }
 
 
-async function fetchUser() { try { var res = await api('GET', '/api/user/profile'); if (res && res.user) { currentUser = res.user; sessionStorage.setItem('blaze_user', JSON.stringify(currentUser)); loadProfile(); updateVendorUI(); } } catch(e) { console.error('Error fetching user', e); } }
+async function fetchUser() { try { var res = await api('GET', '/api/user/profile'); if (res && res.user) { currentUser = res.user; localStorage.setItem('blaze_user', JSON.stringify(currentUser)); loadProfile(); updateVendorUI(); } } catch(e) { console.error('Error fetching user', e); } }
 
 async function saveProfile(){
   if(!currentUser){showToast('No user logged in','#FF3B3B');return;}
@@ -3543,7 +3543,7 @@ async function setInitialWithdrawalPin() {
       document.getElementById('profile-withdraw-pin').value = ''; 
       showToast('Withdrawal PIN set successfully!', '#00FF88');
       currentUser.withdrawalPin = pin;
-      sessionStorage.setItem('blaze_user', JSON.stringify(currentUser));
+      localStorage.setItem('blaze_user', JSON.stringify(currentUser));
       loadProfile(); // Refresh UI
     } else {
       showToast(res.error || 'Failed to set PIN', '#FF3B3B');
@@ -3773,8 +3773,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (forceLogout) {
         userToken = null;
         currentUser = null;
-        sessionStorage.removeItem('blaze_token');
-        sessionStorage.removeItem('blaze_user');
+        localStorage.removeItem('blaze_token');
+        localStorage.removeItem('blaze_user');
         showPage('landing');
         return;
     }
@@ -3783,7 +3783,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadActualAdminDashboard();
     } else if (userToken && !hasRef) {
         loadDataClaims();
-        var savedUser = sessionStorage.getItem('blaze_user');
+        var savedUser = localStorage.getItem('blaze_user');
         if(savedUser){
             try{currentUser=JSON.parse(savedUser);}catch(e){}
         }
@@ -3797,12 +3797,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if(typeof fetchUser === 'function') fetchUser();
         if(typeof loadDashboardTopEarners === 'function') loadDashboardTopEarners();
-    } else if (hasRef) {
+    } else if (hasRef && !userToken) {
         userToken = null;
         currentUser = null;
-        sessionStorage.removeItem('blaze_token');
-        sessionStorage.removeItem('blaze_user');
-        sessionStorage.removeItem('global_popup_shown');
+        localStorage.removeItem('blaze_token');
+        localStorage.removeItem('blaze_user');
+        localStorage.removeItem('global_popup_shown');
         if(document.getElementById('sb-vendor-area')) document.getElementById('sb-vendor-area').style.display = 'none';
         if(document.getElementById('bn-vendor-area')) document.getElementById('bn-vendor-area').style.display = 'none';
         showPage('landing');
@@ -3906,7 +3906,7 @@ async function closeTargetedPopup() {
     try {
         await api('POST', '/api/user/clear-targeted-popup');
         if(currentUser) currentUser.targetedPopup = null;
-        sessionStorage.setItem('blaze_user', JSON.stringify(currentUser));
+        localStorage.setItem('blaze_user', JSON.stringify(currentUser));
     } catch(e) {}
 }
 
