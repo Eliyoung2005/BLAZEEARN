@@ -629,9 +629,9 @@ app.delete('/api/admin/users/:id', (req, res) => {
         }
 
         db.serialize(() => {
-            db.run('DELETE FROM user_tasks WHERE username = ?', [username]);
+            db.run('DELETE FROM user_tasks WHERE userId = ?', [userIdToDelete]);
             db.run('DELETE FROM data_claims WHERE userId = ?', [userIdToDelete]);
-            db.run('DELETE FROM withdrawals WHERE userId = ?', [userIdToDelete]);
+            db.run('DELETE FROM withdrawals WHERE username = ?', [username]);
             db.run('DELETE FROM vendors WHERE linkedUsername = ?', [username]);
             db.run('UPDATE coupons SET assignedVendor = NULL WHERE assignedVendor = ?', [username]);
             
