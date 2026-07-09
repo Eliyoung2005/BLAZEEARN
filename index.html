@@ -2218,6 +2218,7 @@ async function api(method, endpoint, data=null, isAdmin=false) {
   try {
     var opts = {
       method: method,
+      cache: 'no-store', // Prevent aggressive GET caching
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
