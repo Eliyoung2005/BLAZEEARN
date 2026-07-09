@@ -208,7 +208,14 @@ if (usePostgres) {
         console.error('Failed to import sqlite3:', e.message);
     }
 
-    let dbPath = process.env.DATABASE_PATH || path.resolve(__dirname, 'users.db');
+    let dbPath = process.env.DATABASE_PATH;
+    if (!dbPath) {
+        if (process.env.RAILWAY_ENVIRONMENT_ID || process.env.RAILWAY_STATIC_URL || process.env.RAILWAY_PROJECT_ID) {
+            dbPath = '/app/data/users.db';
+        } else {
+            dbPath = path.resolve(__dirname, 'users.db');
+        }
+    }
 
     if (isVercel) {
         const tempDbPath = path.join('/tmp', 'users.db');
