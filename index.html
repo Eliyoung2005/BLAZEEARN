@@ -406,6 +406,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 .badge-approved{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.2);}
 .badge-successful{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.2);}
 .badge-used{background:rgba(255,59,59,0.12);color:var(--red);border:1px solid rgba(255,59,59,0.2);}
+.badge-rejected{background:rgba(255,59,59,0.12);color:var(--red);border:1px solid rgba(255,59,59,0.2);}
 .badge-active{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.2);}
 /* ADMIN */
 #admin{background:var(--dark);display:none;}
@@ -1576,7 +1577,7 @@ input[type="password"]::-ms-reveal, input[type="password"]::-webkit-reveal { dis
       </div>
       <div class="tbox">
         <div class="tbox-head"><h4>Users Data Claim Info — Numbers and Networks</h4></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Username</th><th>Full Name</th><th>Phone Number</th><th>Network</th><th>Data Phone</th></tr></thead>
+        <div style="overflow-x:auto;"><table><thead><tr><th>#</th><th>Username</th><th>Network</th><th>Data Phone</th><th>Status</th><th>Action</th></tr></thead>
         <tbody id="data-claims-tbody"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:22px;">No data claim info yet.</td></tr></tbody></table></div>
       </div>
     </div>
@@ -2022,7 +2023,7 @@ tr:hover td { background: #222; }
   </div>
   <div class="staff-section">
     <h3>Data Claims</h3>
-    <table><thead><tr><th>#</th><th>Username</th><th>Name</th><th>Phone</th><th>Network</th><th>Data Phone</th></tr></thead><tbody id="data-claims-tbody"></tbody></table>
+    <table><thead><tr><th>#</th><th>Username</th><th>Network</th><th>Data Phone</th><th>Status</th><th>Action</th></tr></thead><tbody id="data-claims-tbody"></tbody></table>
   </div>
   <div class="staff-section">
     <h3>Activity Withdrawals</h3>
@@ -2894,18 +2895,48 @@ async function saveDataClaimRefsSetting() {
 
 // ===== DATA CLAIMS TABLE =====
 async function refreshDataClaimsTable(){
-  var tbody=document.getElementById('data-claims-tbody');
-  if(!tbody)return;
+  var tbodies = document.querySelectorAll('#data-claims-tbody');
+  if(!tbodies.length) return;
   try {
-    var res = await api('GET', '/api/admin/users', null, true);
-    var allUsers = res.users || [];
-    var eligible=allUsers.filter(function(u){return u.dataNetwork||u.dataPhone;});
-    tbody.innerHTML=eligible.length?eligible.map(function(u,i){
-      return '<tr><td style="color:var(--muted);">'+(i+1)+'</td><td style="color:var(--gold);">@'+u.username+'</td><td>'+u.firstName+' '+u.lastName+'</td><td style="font-family:monospace;">'+u.phone+'</td><td><span class="badge badge-'+(u.dataNetwork?'active':'pending')+'">'+(u.dataNetwork||'Not set')+'</span></td><td style="font-family:monospace;">'+(u.dataPhone||'-')+'</td></tr>';
-    }).join(''):'<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:22px;">No data claim info submitted yet.</td></tr>';
+    var res = await api('GET', '/api/admin/data-claims', null, true);
+    var claims = res.claims || [];
+    var html = claims.length ? claims.map(function(c,i){
+      var actions = '';
+      if(c.status === 'pending') {
+          actions = '<button class="btn" style="padding:4px 8px;font-size:0.7rem;background:var(--green);color:#000;border:none;margin-right:5px;min-width:60px;" onclick="approveDataClaim('+c.id+')">Approve</button>' +
+                    '<button class="btn" style="padding:4px 8px;font-size:0.7rem;background:var(--red);color:#fff;border:none;min-width:60px;" onclick="rejectDataClaim('+c.id+')">Reject</button>';
+      } else {
+          actions = '—';
+      }
+      return '<tr><td style="color:var(--muted);">'+(i+1)+'</td><td style="color:var(--gold);">@'+c.username+'</td><td>'+c.network+'</td><td style="font-family:monospace;">'+c.phone+'</td><td><span class="badge badge-'+c.status+'">'+c.status+'</span></td><td>'+actions+'</td></tr>';
+    }).join('') : '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:22px;">No data claim info submitted yet.</td></tr>';
+    
+    tbodies.forEach(function(tb) { tb.innerHTML = html; });
   } catch(err) {
-    tbody.innerHTML='<tr><td colspan="6" style="color:var(--red);text-align:center;padding:22px;">Error loading data claims</td></tr>';
+    tbodies.forEach(function(tb) { tb.innerHTML = '<tr><td colspan="6" style="color:var(--red);text-align:center;padding:22px;">Error loading data claims</td></tr>'; });
   }
+}
+
+async function approveDataClaim(id) {
+    if(!confirm("Approve this data claim?")) return;
+    try {
+        var res = await api('PUT', '/api/admin/data-claims/' + id + '/approve', null, true);
+        showToast(res.message || 'Approved', '#00FF88');
+        refreshDataClaimsTable();
+    } catch(err) {
+        showToast(err.message, '#FF3B3B');
+    }
+}
+
+async function rejectDataClaim(id) {
+    if(!confirm("Reject this data claim?")) return;
+    try {
+        var res = await api('PUT', '/api/admin/data-claims/' + id + '/reject', null, true);
+        showToast(res.message || 'Rejected', '#00FF88');
+        refreshDataClaimsTable();
+    } catch(err) {
+        showToast(err.message, '#FF3B3B');
+    }
 }
 
 function viewUserReferrals(username, refCode) {

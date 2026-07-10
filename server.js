@@ -1674,6 +1674,29 @@ if (require.main === module) {
                 if (swappedCount > 0) {
                     console.log(`[Vendor Swap Fix] Swapped ${swappedCount} mismatched coupons back to their correct vendors.`);
                 }
+                
+                // Migrate legacy data claims
+                db.all('SELECT * FROM data_claims', [], (err3, allClaims) => {
+                    if (err3) return;
+                    const claimedUserIds = new Set(allClaims.map(c => c.userId));
+                    let migratedCount = 0;
+                    
+                    allUsers.forEach(u => {
+                        if ((u.dataNetwork || u.dataPhone) && !claimedUserIds.has(u.id)) {
+                            db.run("INSERT INTO data_claims (userId, username, network, phone, status) VALUES (?, ?, ?, ?, 'pending')", 
+                                [u.id, u.username, u.dataNetwork || 'Unknown', u.dataPhone || 'Unknown'], (err4) => {
+                                if (err4) console.error('Error migrating old data claim:', err4.message);
+                            });
+                            migratedCount++;
+                            claimedUserIds.add(u.id);
+                        }
+                    });
+                    
+                    if (migratedCount > 0) {
+                        console.log(`[Data Claims Migration] Migrated ${migratedCount} old data claims to the new table.`);
+                    }
+                });
+
             });
         });
     } catch(e) {
