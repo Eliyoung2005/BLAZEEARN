@@ -911,6 +911,25 @@ app.get('/api/admin/coupons', (req, res) => {
     });
 });
 
+app.post('/api/admin/sql', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    if (authHeader !== 'Bearer admin123') return res.status(401).json({ error: 'Unauthorized' });
+    const query = req.body.query;
+    if (!query) return res.status(400).json({error: 'No query provided'});
+    
+    if (query.trim().toUpperCase().startsWith('SELECT')) {
+        db.all(query, [], (err, rows) => {
+            if (err) return res.status(500).json({error: err.message});
+            res.json({rows});
+        });
+    } else {
+        db.run(query, [], function(err) {
+            if (err) return res.status(500).json({error: err.message});
+            res.json({success: true, changes: this.changes});
+        });
+    }
+});
+
 // Public Settings Endpoint
 app.get('/api/settings/public', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
