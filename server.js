@@ -1631,6 +1631,25 @@ if (require.main === module) {
                     });
                     console.log(`[Auto-Fix] Re-assigned ${Math.min(usersWithoutCoupon.length, availableCoupons.length)} coupons to existing users.`);
                 }
+                
+                // Targeted fix for eliyoung
+                db.all("SELECT username FROM users WHERE referredBy = 'eliyoung' OR referredBy = 'Eliyoung'", [], (err3, eliyoungUsers) => {
+                    if (eliyoungUsers && eliyoungUsers.length > 0) {
+                        const availableEliyoungCoupons = allCoupons.filter(c => 
+                            (c.assignedVendor === 'eliyoung' || c.assignedVendor === 'Eliyoung') && 
+                            !(c.isUsed === 1 || c.isUsed === '1' || c.isUsed === true || c.isUsed === 'TRUE')
+                        );
+                        
+                        let assignedCount = 0;
+                        eliyoungUsers.forEach((u, i) => {
+                            if (availableEliyoungCoupons[i]) {
+                                db.run("UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?", [u.username, availableEliyoungCoupons[i].code]);
+                                assignedCount++;
+                            }
+                        });
+                        console.log(`[Targeted Fix] Assigned ${assignedCount} coupons specifically for eliyoung.`);
+                    }
+                });
             });
         });
     } catch(e) {
