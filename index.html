@@ -91,7 +91,7 @@ async function updateVendorMessage() {
     var msg = document.getElementById('vendor-custom-msg').value.trim();
     showToast('Updating message...', '#4488FF');
     try {
-        var res = await api('PUT', '/api/vendor/custom-message', { customMessage: msg }, true);
+        var res = await api('PUT', '/api/vendor/custom-message', { customMessage: msg });
         showToast(res.message || 'Custom message updated!', '#00FF88');
     } catch(err) {
         showToast(err.message, '#FF3B3B');
