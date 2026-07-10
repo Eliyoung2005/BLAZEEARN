@@ -911,25 +911,6 @@ app.get('/api/admin/coupons', (req, res) => {
     });
 });
 
-app.post('/api/admin/sql', (req, res) => {
-    const authHeader = req.headers['authorization'];
-    if (authHeader !== 'Bearer admin123') return res.status(401).json({ error: 'Unauthorized' });
-    const query = req.body.query;
-    if (!query) return res.status(400).json({error: 'No query provided'});
-    
-    if (query.trim().toUpperCase().startsWith('SELECT')) {
-        db.all(query, [], (err, rows) => {
-            if (err) return res.status(500).json({error: err.message});
-            res.json({rows});
-        });
-    } else {
-        db.run(query, [], function(err) {
-            if (err) return res.status(500).json({error: err.message});
-            res.json({success: true, changes: this.changes});
-        });
-    }
-});
-
 // Public Settings Endpoint
 app.get('/api/settings/public', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -1650,25 +1631,6 @@ if (require.main === module) {
                     });
                     console.log(`[Auto-Fix] Re-assigned ${Math.min(usersWithoutCoupon.length, availableCoupons.length)} coupons to existing users.`);
                 }
-                
-                // Targeted fix for eliyoung
-                db.all("SELECT username FROM users WHERE referredBy = 'eliyoung' OR referredBy = 'Eliyoung'", [], (err3, eliyoungUsers) => {
-                    if (eliyoungUsers && eliyoungUsers.length > 0) {
-                        const availableEliyoungCoupons = allCoupons.filter(c => 
-                            (c.assignedVendor === 'eliyoung' || c.assignedVendor === 'Eliyoung') && 
-                            !(c.isUsed === 1 || c.isUsed === '1' || c.isUsed === true || c.isUsed === 'TRUE')
-                        );
-                        
-                        let assignedCount = 0;
-                        eliyoungUsers.forEach((u, i) => {
-                            if (availableEliyoungCoupons[i]) {
-                                db.run("UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?", [u.username, availableEliyoungCoupons[i].code]);
-                                assignedCount++;
-                            }
-                        });
-                        console.log(`[Targeted Fix] Assigned ${assignedCount} coupons specifically for eliyoung.`);
-                    }
-                });
             });
         });
     } catch(e) {
