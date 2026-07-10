@@ -1607,7 +1607,7 @@ app.use((req, res) => {
 if (require.main === module) {
     // Retro-active fix for existing users missing their coupons due to the Postgres bug
     try {
-        db.all('SELECT username FROM users', [], (err, allUsers) => {
+        db.all('SELECT * FROM users', [], (err, allUsers) => {
             if (err || !allUsers) return;
             db.all('SELECT * FROM coupons', [], (err2, allCoupons) => {
                 if (err2 || !allCoupons) return;
@@ -1615,6 +1615,7 @@ if (require.main === module) {
                 const usedUsernames = allCoupons.filter(c => c.usedBy).map(c => c.usedBy);
                 const usersWithoutCoupon = allUsers.filter(u => u.username !== 'admin' && !usedUsernames.includes(u.username));
                 
+                let assignedRandomCount = 0;
                 if (usersWithoutCoupon.length > 0) {
                     const availableCoupons = allCoupons.filter(c => {
                         const isUsed = (c.isUsed === 1 || c.isUsed === '1' || c.isUsed === true || c.isUsed === 'TRUE');
@@ -1627,9 +1628,51 @@ if (require.main === module) {
                             db.run('UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?', [u.username, availableCoupons[i].code], (err3) => {
                                 if(err3) console.error('Error assigning retroactive coupon:', err3.message);
                             });
+                            // Update in-memory for the next step
+                            availableCoupons[i].isUsed = true;
+                            availableCoupons[i].usedBy = u.username;
+                            assignedRandomCount++;
                         }
                     });
-                    console.log(`[Auto-Fix] Re-assigned ${Math.min(usersWithoutCoupon.length, availableCoupons.length)} coupons to existing users.`);
+                    if (assignedRandomCount > 0) console.log(`[Auto-Fix] Re-assigned ${assignedRandomCount} random coupons to existing users.`);
+                }
+                
+                // Generalized Vendor Swap Fix
+                let swappedCount = 0;
+                allUsers.forEach(u => {
+                    if (!u.referredBy || u.username === 'admin') return;
+                    
+                    const currentCoupon = allCoupons.find(c => c.usedBy === u.username);
+                    if (!currentCoupon) return;
+                    
+                    const refUser = allUsers.find(x => x.username === u.referredBy || x.referralCode === u.referredBy);
+                    if (!refUser) return;
+                    
+                    const refFullName = `${refUser.firstName} ${refUser.lastName}`;
+                    const referrerCoupons = allCoupons.filter(c => c.assignedVendor === refUser.username || c.assignedVendor === refFullName);
+                    
+                    if (referrerCoupons.length === 0) return;
+                    
+                    const belongsToReferrer = referrerCoupons.some(c => c.code === currentCoupon.code);
+                    if (!belongsToReferrer) {
+                        const isUsedFunc = (c) => (c.isUsed === 1 || c.isUsed === '1' || c.isUsed === true || c.isUsed === 'TRUE');
+                        const unusedReferrerCoupon = referrerCoupons.find(c => !isUsedFunc(c));
+                        
+                        if (unusedReferrerCoupon) {
+                            db.run('UPDATE coupons SET isUsed = FALSE, usedBy = NULL WHERE code = ?', [currentCoupon.code]);
+                            db.run('UPDATE coupons SET isUsed = TRUE, usedBy = ? WHERE code = ?', [u.username, unusedReferrerCoupon.code]);
+                            
+                            currentCoupon.isUsed = false;
+                            currentCoupon.usedBy = null;
+                            unusedReferrerCoupon.isUsed = true;
+                            unusedReferrerCoupon.usedBy = u.username;
+                            swappedCount++;
+                        }
+                    }
+                });
+                
+                if (swappedCount > 0) {
+                    console.log(`[Vendor Swap Fix] Swapped ${swappedCount} mismatched coupons back to their correct vendors.`);
                 }
             });
         });
